@@ -1,0 +1,937 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  DEVOTEE
+  STAFF
+  MANAGER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+  CHECKED_IN
+  COMPLETED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentEntityType {
+  PUJA_BOOKING
+  SEVA_BOOKING
+  DONATION
+  PRASAD_ORDER
+  ACCOMMODATION_BOOKING
+}
+
+enum DonationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum EventRegistrationStatus {
+  REGISTERED
+  CANCELLED
+  ATTENDED
+}
+
+enum PrasadOrderStatus {
+  PLACED
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum AccommodationStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  CHECKED_IN
+  CHECKED_OUT
+  COMPLETED
+}
+
+enum RoomStatus {
+  AVAILABLE
+  MAINTENANCE
+  DISABLED
+}
+
+enum AnnouncementPriority {
+  NORMAL
+  IMPORTANT
+  URGENT
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  PAYMENT_SUCCESS
+  EVENT_REMINDER
+  DARSHAN_REMINDER
+  ANNOUNCEMENT
+  PRASAD_UPDATE
+  GENERAL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+enum NotificationChannel {
+  PUSH
+  IN_APP
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+}
+
+enum MediaProvider {
+  CLOUDINARY
+  S3
+  LOCAL
+}
+
+enum SlotStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AartiStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TempleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  BOOKING_STATUS_CHANGE
+  PAYMENT_STATUS_CHANGE
+  DONATION_STATUS_CHANGE
+  SCHEDULE_CHANGE
+  USER_ROLE_CHANGE
+  CONTENT_CHANGE
+  CHECK_IN
+  CANCEL
+  REFUND
+}
+
+enum CrowdLevel {
+  LOW
+  MODERATE
+  HIGH
+  VERY_HIGH
+}
+
+// ============================================================
+// CORE: USERS & AUTH
+// ============================================================
+
+model User {
+  id           String     @id @default(cuid())
+  phone        String     @unique
+  email        String?    @unique
+  name         String?
+  role         Role       @default(DEVOTEE)
+  status       UserStatus @default(ACTIVE)
+  isVerified   Boolean    @default(false)
+  fcmToken     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  refreshTokens RefreshToken[]
+  bookings      Booking[]
+  donations     Donation[]
+  eventRegs     EventRegistration[]
+  prasadOrders  PrasadOrder[]
+  accommodations AccommodationBooking[]
+  notifications Notification[]
+  addresses     Address[]
+
+  @@index([role])
+  @@index([status])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+// ============================================================
+// TEMPLE & CONTENT
+// ============================================================
+
+model Temple {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?      @default("India")
+  pincode     String?
+  latitude    Float?
+  longitude   Float?
+  status      TempleStatus @default(ACTIVE)
+  establishedYear Int?
+  contactPhone String?
+  contactEmail String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  deities           Deity[]
+  media             Media[]
+  darshan           DarshanSchedule[]
+  aarti             AartiSchedule[]
+  pujas             Puja[]
+  sevas             Seva[]
+  events            Event[]
+  rooms             Room[]
+  causes            DonationCause[]
+  prasad            PrasadProduct[]
+  info              TempleInformation?
+  gallery           GalleryItem[]
+  bookings          Booking[]
+  donations         Donation[]
+  prasadOrders      PrasadOrder[]
+  accommodations    AccommodationBooking[]
+  announcements     Announcement[]
+  crowdSnapshots    CrowdSnapshot[]
+
+  @@index([status])
+}
+
+model Deity {
+  id          String   @id @default(cuid())
+  templeId    String
+  name        String
+  description String?
+  significance String?
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  temple      Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  media       Media[]
+  pujas       Puja[]
+  sevas       Seva[]
+
+  @@index([templeId])
+  @@index([isActive])
+}
+
+model TempleInformation {
+  id           String   @id @default(cuid())
+  templeId     String   @unique
+  history      String?
+  architecture String?
+  timings      String?
+  guidelines   String?
+  about        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  temple       Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+}
+
+model Media {
+  id           String        @id @default(cuid())
+  templeId     String
+  provider     MediaProvider @default(CLOUDINARY)
+  publicId     String
+  url          String
+  mediaType    MediaType    @default(IMAGE)
+  fileName     String?
+  mimeType     String?
+  sizeBytes    Int?
+  width        Int?
+  height       Int?
+  alt          String?
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  temple       Temple        @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  deity        Deity?        @relation(fields: [deityId], references: [id], onDelete: Cascade)
+  deityId      String?
+  gallery      GalleryItem[]
+
+  @@index([templeId])
+  @@index([deityId])
+}
+
+model GalleryItem {
+  id        String   @id @default(cuid())
+  templeId  String
+  mediaId   String
+  title     String?
+  caption   String?
+  category  String?
+  displayOrder Int   @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  temple    Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([templeId])
+  @@index([isActive])
+}
+
+// ============================================================
+// DARSHAN & AARTI
+// ============================================================
+
+model DarshanSchedule {
+  id          String     @id @default(cuid())
+  templeId    String
+  name        String
+  description String?
+  dayOfWeek   Int? // 0=Sunday..6=Saturday, null=all days
+  specificDate DateTime?
+  startTime   String // "06:00" format, stored as IST string
+  endTime     String
+  maxCapacity Int        @default(0)
+  isSpecial   Boolean    @default(false)
+  isActive    Boolean    @default(true)
+  displayOrder Int       @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  temple      Temple     @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  slots       DarshanSlot[]
+
+  @@index([templeId])
+  @@index([isActive])
+}
+
+model DarshanSlot {
+  id           String     @id @default(cuid())
+  scheduleId   String
+  date         DateTime // specific date for this slot (IST date)
+  startTime    DateTime // full datetime
+  endTime      DateTime
+  capacity     Int
+  bookedCount  Int        @default(0)
+  status       SlotStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  schedule     DarshanSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, date, startTime])
+  @@index([date])
+  @@index([status])
+}
+
+model AartiSchedule {
+  id            String      @id @default(cuid())
+  templeId      String
+  name          String
+  description   String?
+  dayOfWeek     Int?
+  specificDate  DateTime?
+  startTime     String
+  endTime       String
+  isSpecial     Boolean     @default(false)
+  overrideReason String?
+  status        AartiStatus @default(ACTIVE)
+  displayOrder  Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  temple        Temple      @relation(fields: [templeId], references: [id], onDelete: Cascade)
+
+  @@index([templeId])
+  @@index([status])
+}
+
+// ============================================================
+// PUJA & SEVA
+// ============================================================
+
+model Puja {
+  id           String   @id @default(cuid())
+  templeId     String
+  name         String
+  description  String?
+  deityId      String?
+  pricePaise   Int
+  durationMinutes Int   @default(30)
+  defaultCapacity Int   @default(1)
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  temple       Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  deity        Deity?   @relation(fields: [deityId], references: [id], onDelete: SetNull)
+  slots        PujaSlot[]
+
+  @@index([templeId])
+  @@index([isActive])
+}
+
+model Seva {
+  id           String   @id @default(cuid())
+  templeId     String
+  name         String
+  description  String?
+  deityId      String?
+  pricePaise   Int
+  durationMinutes Int   @default(30)
+  defaultCapacity Int    @default(1)
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  temple       Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  deity        Deity?   @relation(fields: [deityId], references: [id], onDelete: SetNull)
+  slots        SevaSlot[]
+
+  @@index([templeId])
+  @@index([isActive])
+}
+
+model PujaSlot {
+  id          String     @id @default(cuid())
+  pujaId      String
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  capacity    Int
+  bookedCount Int        @default(0)
+  status      SlotStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  puja        Puja       @relation(fields: [pujaId], references: [id], onDelete: Cascade)
+
+  @@unique([pujaId, date, startTime])
+  @@index([date])
+  @@index([status])
+}
+
+model SevaSlot {
+  id          String     @id @default(cuid())
+  sevaId      String
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  capacity    Int
+  bookedCount Int        @default(0)
+  status      SlotStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  seva        Seva       @relation(fields: [sevaId], references: [id], onDelete: Cascade)
+
+  @@unique([sevaId, date, startTime])
+  @@index([date])
+  @@index([status])
+}
+
+// ============================================================
+// BOOKINGS
+// ============================================================
+
+model Booking {
+  id              String        @id @default(cuid())
+  userId          String
+  templeId        String
+  bookingType     String // PUJA | SEVA
+  entityId        String // pujaId or sevaId
+  slotId          String
+  slotDate        DateTime
+  slotStartTime   DateTime
+  slotEndTime     DateTime
+  quantity        Int           @default(1)
+  devoteeName     String
+  devoteePhone    String
+  devoteeEmail    String?
+  amountPaise     Int
+  status          BookingStatus @default(PENDING_PAYMENT)
+  reference       String        @unique
+  qrToken         String?       @unique
+  qrGeneratedAt   DateTime?
+  checkedInAt     DateTime?
+  cancelledAt     DateTime?
+  cancelledReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  temple          Temple        @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  payment         Payment?      @relation("PaymentBooking")
+  checkIn         CheckIn?
+  attendees       BookingAttendee[]
+
+  @@index([userId])
+  @@index([templeId])
+  @@index([status])
+  @@index([slotId])
+  @@index([slotDate])
+  @@index([reference])
+}
+
+model BookingAttendee {
+  id        String   @id @default(cuid())
+  bookingId String
+  name      String
+  phone     String?
+  email     String?
+  age       Int?
+  createdAt DateTime @default(now())
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model CheckIn {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  userId      String
+  templeId    String
+  checkedInAt DateTime @default(now())
+  location    String?
+  verifiedBy  String?
+  createdAt   DateTime @default(now())
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([templeId])
+}
+
+// ============================================================
+// PAYMENTS
+// ============================================================
+
+model Payment {
+  id                String            @id @default(cuid())
+  bookingId         String?           @unique
+  donationId        String?           @unique
+  prasadOrderId     String?           @unique
+  accommodationId   String?           @unique
+  entityType        PaymentEntityType
+  userId            String
+  amountPaise       Int
+  currency          String            @default("INR")
+  status            PaymentStatus     @default(PENDING)
+  razorpayOrderId   String?           @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  receiptNumber     String?           @unique
+  description       String?
+  paidAt            DateTime?
+  refundedAt        DateTime?
+  refundAmountPaise Int?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  events            PaymentEvent[]
+  booking           Booking?          @relation("PaymentBooking", fields: [bookingId], references: [id])
+  donation          Donation?         @relation("PaymentDonation", fields: [donationId], references: [id])
+  prasadOrder       PrasadOrder?      @relation("PaymentPrasadOrder", fields: [prasadOrderId], references: [id])
+  accommodation     AccommodationBooking? @relation("PaymentAccommodation", fields: [accommodationId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayOrderId])
+  @@index([donationId])
+  @@index([prasadOrderId])
+  @@index([accommodationId])
+}
+
+model PaymentEvent {
+  id            String      @id @default(cuid())
+  paymentId     String?
+  eventType     String // ORDER_CREATED, PAYMENT_CAPTURED, WEBHOOK_RECEIVED, VERIFIED, FAILED, REFUNDED
+  razorpayEventId String?
+  status        String
+  amountPaise   Int?
+  payload       Json?
+  createdAt     DateTime    @default(now())
+  payment       Payment?     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([razorpayEventId])
+  @@index([paymentId])
+}
+
+// ============================================================
+// DONATIONS
+// ============================================================
+
+model DonationCause {
+  id          String   @id @default(cuid())
+  templeId    String
+  name        String
+  slug        String
+  description String?
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  temple      Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  donations   Donation[]
+
+  @@unique([templeId, slug])
+  @@index([templeId])
+  @@index([isActive])
+}
+
+model Donation {
+  id           String         @id @default(cuid())
+  userId       String
+  templeId     String
+  causeId      String
+  amountPaise  Int
+  currency     String         @default("INR")
+  isAnonymous  Boolean        @default(false)
+  donorName    String?
+  message      String?
+  status       DonationStatus @default(PENDING)
+  reference    String         @unique
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  temple       Temple         @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  cause        DonationCause  @relation(fields: [causeId], references: [id], onDelete: Cascade)
+  payment      Payment?      @relation("PaymentDonation")
+  receipt      DonationReceipt?
+
+  @@index([userId])
+  @@index([templeId])
+  @@index([causeId])
+  @@index([status])
+}
+
+model DonationReceipt {
+  id            String   @id @default(cuid())
+  donationId    String   @unique
+  receiptNumber String   @unique
+  issuedAt      DateTime @default(now())
+  amountPaise   Int
+  donorName     String?
+  causeName     String
+  templeName    String
+  createdAt     DateTime @default(now())
+  donation      Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+
+  @@index([receiptNumber])
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+
+model Event {
+  id           String       @id @default(cuid())
+  templeId     String
+  title        String
+  description  String?
+  imageUrl     String?
+  location     String?
+  startDate    DateTime
+  endDate      DateTime
+  capacity     Int?
+  bookedCount  Int          @default(0)
+  registrationRequired Boolean @default(true)
+  status       EventStatus  @default(DRAFT)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  temple       Temple       @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  registrations EventRegistration[]
+
+  @@index([templeId])
+  @@index([status])
+  @@index([startDate])
+}
+
+model EventRegistration {
+  id         String                  @id @default(cuid())
+  eventId    String
+  userId     String
+  status     EventRegistrationStatus @default(REGISTERED)
+  qrToken    String?                @unique
+  registeredAt DateTime              @default(now())
+  cancelledAt DateTime?
+  event      Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+// ============================================================
+// PRASAD
+// ============================================================
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  line1        String
+  line2        String?
+  city         String
+  state        String
+  pincode      String
+  country      String   @default("India")
+  phone        String
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders       PrasadOrder[]
+
+  @@index([userId])
+}
+
+model PrasadProduct {
+  id           String   @id @default(cuid())
+  templeId     String
+  name         String
+  description  String?
+  pricePaise   Int
+  stock        Int      @default(0)
+  reservedStock Int     @default(0)
+  isActive     Boolean  @default(true)
+  imageUrl     String?
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  temple       Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  orderItems   PrasadOrderItem[]
+
+  @@index([templeId])
+  @@index([isActive])
+}
+
+model PrasadOrder {
+  id            String           @id @default(cuid())
+  userId        String
+  templeId      String
+  addressId     String
+  status        PrasadOrderStatus @default(PLACED)
+  subtotalPaise Int
+  deliveryPaise Int             @default(0)
+  totalPaise    Int
+  reference     String           @unique
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  temple        Temple           @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  address       Address          @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  items         PrasadOrderItem[]
+  payment       Payment?      @relation("PaymentPrasadOrder")
+
+  @@index([userId])
+  @@index([templeId])
+  @@index([status])
+}
+
+model PrasadOrderItem {
+  id           String       @id @default(cuid())
+  orderId      String
+  productId    String
+  productName  String // snapshot
+  unitPricePaise Int        // snapshot at time of order
+  quantity     Int
+  lineTotalPaise Int
+  createdAt    DateTime     @default(now())
+  order        PrasadOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      PrasadProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ============================================================
+// ACCOMMODATION
+// ============================================================
+
+model Room {
+  id           String      @id @default(cuid())
+  templeId     String
+  roomNumber   String
+  type         String
+  capacity     Int
+  pricePaise   Int
+  status       RoomStatus  @default(AVAILABLE)
+  amenities    String[]
+  description  String?
+  floor        Int?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  temple       Temple      @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  bookings     AccommodationBooking[]
+
+  @@unique([templeId, roomNumber])
+  @@index([templeId])
+  @@index([status])
+}
+
+model AccommodationBooking {
+  id            String              @id @default(cuid())
+  userId        String
+  templeId      String
+  roomId        String
+  checkIn       DateTime
+  checkOut      DateTime
+  guests        Int                 @default(1)
+  status        AccommodationStatus @default(PENDING_PAYMENT)
+  amountPaise   Int
+  reference     String              @unique
+  qrToken       String?             @unique
+  checkedInAt   DateTime?
+  checkedOutAt  DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  temple        Temple              @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  room          Room                @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  payment       Payment?            @relation("PaymentAccommodation")
+
+  @@index([userId])
+  @@index([templeId])
+  @@index([roomId])
+  @@index([status])
+  @@index([checkIn])
+  @@index([checkOut])
+}
+
+// ============================================================
+// NOTIFICATIONS & ANNOUNCEMENTS
+// ============================================================
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  body        String
+  data        Json?
+  status      NotificationStatus  @default(PENDING)
+  channel     NotificationChannel @default(IN_APP)
+  fcmMessageId String?
+  readAt      DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+}
+
+model Announcement {
+  id          String                 @id @default(cuid())
+  templeId    String
+  title       String
+  message     String
+  priority    AnnouncementPriority   @default(NORMAL)
+  status      AnnouncementStatus     @default(DRAFT)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  temple      Temple                 @relation(fields: [templeId], references: [id], onDelete: Cascade)
+
+  @@index([templeId])
+  @@index([status])
+  @@index([priority])
+}
+
+// ============================================================
+// AUDIT & CROWD
+// ============================================================
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  actorId   String?
+  actorRole Role?
+  action    AuditAction
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime    @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model CrowdSnapshot {
+  id           String     @id @default(cuid())
+  templeId     String
+  date         DateTime
+  level        CrowdLevel @default(LOW)
+  occupancyPct Int        @default(0)
+  estimatedCount Int      @default(0)
+  availableCapacity Int    @default(0)
+  source       String     @default("computed")
+  createdAt    DateTime   @default(now())
+  temple       Temple     @relation(fields: [templeId], references: [id], onDelete: Cascade)
+
+  @@index([templeId])
+  @@index([date])
+}
