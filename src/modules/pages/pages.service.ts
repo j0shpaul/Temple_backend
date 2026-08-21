@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from "@nestjs/common";
+import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { RedisService } from "../redis/redis.service";
 import { ApiResponseDto } from "../../common/dto/api-response.dto";
@@ -27,7 +23,11 @@ export class PagesService {
     return null;
   }
 
-  private async setCached(key: string, data: any, ttlSeconds: number): Promise<void> {
+  private async setCached(
+    key: string,
+    data: any,
+    ttlSeconds: number,
+  ): Promise<void> {
     try {
       await this.redis.setex(key, ttlSeconds, JSON.stringify(data));
     } catch {
@@ -61,7 +61,10 @@ export class PagesService {
     const cacheKey = `page:home:${temple.id}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const todayStart = TimezoneUtil.startOfDay();
@@ -100,8 +103,17 @@ export class PagesService {
         orderBy: { startTime: "asc" },
         include: {
           slots: {
-            where: { date: { gte: todayStart, lte: todayEnd }, status: "ACTIVE" },
-            select: { id: true, startTime: true, endTime: true, capacity: true, bookedCount: true },
+            where: {
+              date: { gte: todayStart, lte: todayEnd },
+              status: "ACTIVE",
+            },
+            select: {
+              id: true,
+              startTime: true,
+              endTime: true,
+              capacity: true,
+              bookedCount: true,
+            },
           },
         },
       }),
@@ -244,7 +256,10 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, homeData, 60);
-    return ApiResponseDto.success(homeData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(homeData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
@@ -255,7 +270,10 @@ export class PagesService {
     const cacheKey = `page:about:${temple.id}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const [deities, gallery] = await Promise.all([
@@ -304,13 +322,19 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, aboutData, 120);
-    return ApiResponseDto.success(aboutData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(aboutData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
   // 3. DARSHAN PAGE AGGREGATION
   // ==========================================
-  async getDarshanPage(templeId?: string, targetDate?: string): Promise<ApiResponseDto<any>> {
+  async getDarshanPage(
+    templeId?: string,
+    targetDate?: string,
+  ): Promise<ApiResponseDto<any>> {
     const temple = await this.resolveTemple(templeId);
     const dateStr = targetDate || TimezoneUtil.formatDateForDb(new Date());
     const dateObj = new Date(dateStr);
@@ -319,7 +343,10 @@ export class PagesService {
     const cacheKey = `page:darshan:${temple.id}:${dateStr}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
@@ -387,20 +414,30 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, darshanData, 15);
-    return ApiResponseDto.success(darshanData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(darshanData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
   // 4. PUJA PAGE AGGREGATION
   // ==========================================
-  async getPujaPage(templeId?: string, deityId?: string, targetDate?: string): Promise<ApiResponseDto<any>> {
+  async getPujaPage(
+    templeId?: string,
+    deityId?: string,
+    targetDate?: string,
+  ): Promise<ApiResponseDto<any>> {
     const temple = await this.resolveTemple(templeId);
     const dateStr = targetDate || TimezoneUtil.formatDateForDb(new Date());
 
     const cacheKey = `page:puja:${temple.id}:${deityId || "all"}:${dateStr}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
@@ -416,8 +453,17 @@ export class PagesService {
         include: {
           deity: { select: { id: true, name: true } },
           slots: {
-            where: { date: { gte: startOfDay, lte: endOfDay }, status: "ACTIVE" },
-            select: { id: true, startTime: true, endTime: true, capacity: true, bookedCount: true },
+            where: {
+              date: { gte: startOfDay, lte: endOfDay },
+              status: "ACTIVE",
+            },
+            select: {
+              id: true,
+              startTime: true,
+              endTime: true,
+              capacity: true,
+              bookedCount: true,
+            },
           },
         },
       }),
@@ -452,20 +498,30 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, pujaData, 30);
-    return ApiResponseDto.success(pujaData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(pujaData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
   // 5. SEVA PAGE AGGREGATION
   // ==========================================
-  async getSevaPage(templeId?: string, deityId?: string, targetDate?: string): Promise<ApiResponseDto<any>> {
+  async getSevaPage(
+    templeId?: string,
+    deityId?: string,
+    targetDate?: string,
+  ): Promise<ApiResponseDto<any>> {
     const temple = await this.resolveTemple(templeId);
     const dateStr = targetDate || TimezoneUtil.formatDateForDb(new Date());
 
     const cacheKey = `page:seva:${temple.id}:${deityId || "all"}:${dateStr}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
@@ -481,8 +537,17 @@ export class PagesService {
         include: {
           deity: { select: { id: true, name: true } },
           slots: {
-            where: { date: { gte: startOfDay, lte: endOfDay }, status: "ACTIVE" },
-            select: { id: true, startTime: true, endTime: true, capacity: true, bookedCount: true },
+            where: {
+              date: { gte: startOfDay, lte: endOfDay },
+              status: "ACTIVE",
+            },
+            select: {
+              id: true,
+              startTime: true,
+              endTime: true,
+              capacity: true,
+              bookedCount: true,
+            },
           },
         },
       }),
@@ -517,7 +582,10 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, sevaData, 30);
-    return ApiResponseDto.success(sevaData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(sevaData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
@@ -535,7 +603,10 @@ export class PagesService {
     const cacheKey = `page:events:${temple.id}:${page}:${limit}:${upcoming}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const where: any = { templeId: temple.id, status: "PUBLISHED" };
@@ -570,7 +641,9 @@ export class PagesService {
           endDate: e.endDate,
           capacity: e.capacity,
           registeredCount: regCount,
-          availableSpots: e.capacity ? Math.max(0, e.capacity - regCount) : null,
+          availableSpots: e.capacity
+            ? Math.max(0, e.capacity - regCount)
+            : null,
           isFull: e.capacity ? regCount >= e.capacity : false,
           registrationRequired: e.registrationRequired,
         };
@@ -584,7 +657,10 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, eventsData, 60);
-    return ApiResponseDto.success(eventsData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(eventsData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
@@ -601,7 +677,10 @@ export class PagesService {
     const cacheKey = `page:prasad:${temple.id}:${page}:${limit}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const where = { templeId: temple.id, isActive: true };
@@ -639,7 +718,10 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, prasadData, 60);
-    return ApiResponseDto.success(prasadData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(prasadData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
@@ -656,7 +738,10 @@ export class PagesService {
     const cacheKey = `page:accommodation:${temple.id}:${checkIn || "none"}:${checkOut || "none"}:${capacity || "all"}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     // Get all active rooms
@@ -748,7 +833,10 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, accommodationData, 30);
-    return ApiResponseDto.success(accommodationData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(accommodationData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
@@ -760,7 +848,10 @@ export class PagesService {
     const cacheKey = `page:donations:${temple.id}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const causes = await this.prisma.donationCause.findMany({
@@ -780,14 +871,18 @@ export class PagesService {
       causes,
       taxExemption: {
         section: "80G",
-        description: "All donations are 50% exempt from income tax under section 80G of IT Act.",
+        description:
+          "All donations are 50% exempt from income tax under section 80G of IT Act.",
         panRequired: true,
       },
       suggestedAmountsPaise: [50100, 110000, 210000, 510000, 1100000],
     };
 
     await this.setCached(cacheKey, donationsData, 120);
-    return ApiResponseDto.success(donationsData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(donationsData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // ==========================================
@@ -799,7 +894,10 @@ export class PagesService {
     const cacheKey = `page:overview:${temple.id}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
-      return ApiResponseDto.success(cached, { cached: true, generatedAt: new Date().toISOString() });
+      return ApiResponseDto.success(cached, {
+        cached: true,
+        generatedAt: new Date().toISOString(),
+      });
     }
 
     const [deities, aartis, gallery] = await Promise.all([
@@ -854,6 +952,9 @@ export class PagesService {
     };
 
     await this.setCached(cacheKey, overviewData, 120);
-    return ApiResponseDto.success(overviewData, { cached: false, generatedAt: new Date().toISOString() });
+    return ApiResponseDto.success(overviewData, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
   }
 }

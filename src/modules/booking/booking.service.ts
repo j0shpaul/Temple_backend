@@ -205,6 +205,7 @@ export class BookingService {
       }
 
       const reference = IdUtil.generateBookingReference("DS");
+      const qrToken = IdUtil.generateQRToken();
       const createdBooking = await tx.booking.create({
         data: {
           userId,
@@ -222,6 +223,8 @@ export class BookingService {
           amountPaise: 0,
           status: "CONFIRMED",
           reference,
+          qrToken,
+          qrGeneratedAt: new Date(),
           attendees: data.attendees ? { create: data.attendees } : undefined,
         },
         include: { attendees: true },
@@ -233,7 +236,11 @@ export class BookingService {
     return ApiResponseDto.success(booking);
   }
 
-  async getById(id: string): Promise<ApiResponseDto<any>> {
+  async getById(
+    id: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<ApiResponseDto<any>> {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
       include: {
@@ -244,6 +251,16 @@ export class BookingService {
       },
     });
     if (!booking) throw new NotFoundException("Booking not found");
+
+    if (
+      userId &&
+      userRole &&
+      booking.userId !== userId &&
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(userRole)
+    ) {
+      throw new ForbiddenException("Cannot access another user's booking");
+    }
+
     return ApiResponseDto.success(booking);
   }
 

@@ -83,8 +83,8 @@ export class BookingController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get booking by ID" })
-  async getById(@Param("id") id: string) {
-    return this.bookingService.getById(id);
+  async getById(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.bookingService.getById(id, user.id, user.role);
   }
 
   @Get("temple/:templeId")

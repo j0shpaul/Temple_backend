@@ -379,7 +379,11 @@ export class PrasadService {
     return ApiResponseDto.success(result);
   }
 
-  async getOrderById(id: string): Promise<ApiResponseDto<any>> {
+  async getOrderById(
+    id: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<ApiResponseDto<any>> {
     const order = await this.prisma.prasadOrder.findUnique({
       where: { id },
       include: {
@@ -394,6 +398,16 @@ export class PrasadService {
       },
     });
     if (!order) throw new NotFoundException("Order not found");
+
+    if (
+      userId &&
+      userRole &&
+      order.userId !== userId &&
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(userRole)
+    ) {
+      throw new ForbiddenException("Cannot access another user's order");
+    }
+
     return ApiResponseDto.success(order);
   }
 

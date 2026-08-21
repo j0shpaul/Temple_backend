@@ -50,7 +50,10 @@ async function bootstrap() {
     )
     .setVersion("1.0")
     .addBearerAuth()
-    .addTag("Pages", "Page-level read aggregations (BFF layer for Home, About, Darshan, Puja, Seva, Events, Prasad, Accommodation, Donations, Overview)")
+    .addTag(
+      "Pages",
+      "Page-level read aggregations (BFF layer for Home, About, Darshan, Puja, Seva, Events, Prasad, Accommodation, Donations, Overview)",
+    )
     .addTag("Health", "System health & readiness probes")
     .addTag("Auth", "OTP authentication & JWT token management")
     .addTag("Users", "User profile & address management")

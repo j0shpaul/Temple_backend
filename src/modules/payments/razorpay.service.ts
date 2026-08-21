@@ -23,8 +23,12 @@ export class RazorpayService implements PaymentGateway {
       throw new Error("Razorpay credentials not configured");
     }
     this.keyId = keyId;
-    const RazorpayConstructor = typeof RazorpayLib === 'function' ? RazorpayLib : RazorpayLib.default;
-    this.client = new RazorpayConstructor({ key_id: keyId, key_secret: keySecret });
+    const RazorpayConstructor =
+      typeof RazorpayLib === "function" ? RazorpayLib : RazorpayLib.default;
+    this.client = new RazorpayConstructor({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
   }
 
   getKeyId(): string {
@@ -67,7 +71,10 @@ export class RazorpayService implements PaymentGateway {
     paymentId: string,
     signature: string,
   ): Promise<boolean> {
-    if (process.env.NODE_ENV !== "production" && signature === "test_signature") {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      signature === "test_signature"
+    ) {
       return true;
     }
     const secret = this.config.get<string>("RAZORPAY_KEY_SECRET")!;

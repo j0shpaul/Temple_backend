@@ -113,16 +113,16 @@ export class DonationController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get donation by ID" })
-  async getById(@Param("id") id: string) {
-    return this.donationService.getById(id);
+  async getById(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.donationService.getById(id, user.id, user.role);
   }
 
   @Get(":id/receipt")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get donation receipt" })
-  async getReceipt(@Param("id") id: string) {
-    return this.donationService.getReceipt(id);
+  async getReceipt(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.donationService.getReceipt(id, user.id, user.role);
   }
 
   @Get()

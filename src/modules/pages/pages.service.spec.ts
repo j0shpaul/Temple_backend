@@ -133,7 +133,9 @@ describe("PagesService", () => {
 
     it("should throw NotFoundException if temple not found", async () => {
       mockPrisma.temple.findUnique.mockResolvedValue(null);
-      await expect(service.getHomePage("non-existent")).rejects.toThrow(NotFoundException);
+      await expect(service.getHomePage("non-existent")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

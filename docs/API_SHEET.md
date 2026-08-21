@@ -72,18 +72,14 @@ All responses follow this consistent JSON structure:
 
 ---
 
-## 👤 3. User Profile & Address Book
-
 | Method | Endpoint | Auth | Request Body | Description |
 |---|---|---|---|---|
-| `GET` | `/api/v1/users/me` | Devotee | *(None)* | Get devotee profile |
-| `PUT` | `/api/v1/users/me` | Devotee | `{"name": "string", "email": "string"}` | Update devotee profile |
-| `GET` | `/api/v1/users/me/addresses` | Devotee | *(None)* | List saved delivery addresses |
-| `POST` | `/api/v1/users/me/addresses` | Devotee | `{"recipientName": "string", "phone": "string", "line1": "string", "city": "string", "state": "string", "pincode": "string", "isDefault": boolean}` | Create delivery address |
-| `GET` | `/api/v1/users/me/addresses/:id` | Devotee | *(None)* | Get delivery address details |
-| `PUT` | `/api/v1/users/me/addresses/:id` | Devotee | `{"line1": "string", "city": "string", "pincode": "string"}` | Update address |
-| `DELETE` | `/api/v1/users/me/addresses/:id` | Devotee | *(None)* | Delete address |
-| `PUT` | `/api/v1/users/me/addresses/:id/default` | Devotee | *(None)* | Set address as default |
+| `GET` | `/api/v1/users/profile` | Devotee | *(None)* | Get devotee profile |
+| `GET` | `/api/v1/auth/profile` | Devotee | *(None)* | Get devotee auth profile |
+| `POST` | `/api/v1/auth/profile` | Devotee | `{"name": "string", "email": "string"}` | Update devotee profile |
+| `POST` | `/api/v1/users/addresses` | Devotee | `{"line1": "string", "line2": "string", "city": "string", "state": "string", "pincode": "string", "phone": "string", "isDefault": boolean}` | Create delivery address |
+| `PUT` | `/api/v1/users/addresses/:addressId` | Devotee | `{"line1": "string", "city": "string", "pincode": "string"}` | Update address |
+| `DELETE` | `/api/v1/users/addresses/:addressId` | Devotee | *(None)* | Delete address |
 
 ---
 
@@ -133,7 +129,7 @@ All responses follow this consistent JSON structure:
 | `POST` | `/api/v1/bookings/puja` | Devotee | `{"templeId": "...", "pujaId": "...", "slotId": "...", "quantity": 1, "devoteeName": "Ramesh", "devoteePhone": "+919876543210", "attendees": [{"name": "Ramesh", "age": 42}]}` | Book Puja (atomic reservation) |
 | `POST` | `/api/v1/bookings/seva` | Devotee | `{"templeId": "...", "sevaId": "...", "slotId": "...", "quantity": 1, "devoteeName": "Ramesh", "devoteePhone": "+919876543210"}` | Book Seva slot |
 | `POST` | `/api/v1/bookings/darshan` | Devotee | `{"templeId": "...", "scheduleId": "...", "slotId": "...", "quantity": 2, "devoteeName": "Ramesh", "devoteePhone": "+919876543210"}` | Book Darshan pass |
-| `GET` | `/api/v1/bookings/my` | Devotee | `?status=CONFIRMED&page=1` | Devotee's booking history with QR tokens |
+| `GET` | `/api/v1/bookings/me` | Devotee | `?status=CONFIRMED&page=1` | Devotee's booking history with QR tokens |
 | `GET` | `/api/v1/bookings/:id` | Devotee | *(None)* | Single booking pass & attendee details |
 | `POST` | `/api/v1/bookings/:id/cancel` | Devotee | `{"reason": "Unable to attend"}` | Cancel booking and release slot |
 | `GET` | `/api/v1/bookings/temple/:templeId` | Staff+ | `?date=YYYY-MM-DD` | Staff list all bookings for temple |
@@ -145,36 +141,11 @@ All responses follow this consistent JSON structure:
 | Method | Endpoint | Auth | Request Body | Description |
 |---|---|---|---|---|
 | `POST` | `/api/v1/payments/booking/:bookingId` | Devotee | *(None)* | Generate Razorpay order for booking |
-| `POST` | `/api/v1/payments/donation/:donationId` | Devotee | *(None)* | Generate Razorpay order for donation |
-| `POST` | `/api/v1/payments/prasad/:orderId` | Devotee | *(None)* | Generate Razorpay order for Prasad order |
+| `GET` | `/api/v1/payments/me` | Devotee | `?page=1&limit=20` | Get current user payments |
+| `GET` | `/api/v1/payments/:id` | Devotee | *(None)* | Get payment by ID |
 | `POST` | `/api/v1/payments/verify` | Devotee | `{"bookingId": "...", "razorpayOrderId": "...", "razorpayPaymentId": "...", "razorpaySignature": "..."}` | Verify signature and mark order as `CONFIRMED` |
 | `POST` | `/api/v1/payments/webhook` | Public | Razorpay Webhook Payload | Gateway asynchronous callback |
-
-### 💡 Frontend Razorpay Modal Integration Example
-```javascript
-const res = await api.post(`/payments/booking/${bookingId}`);
-const { paymentId, razorpayOrderId, amountPaise, currency, keyId } = res.data.data;
-
-const options = {
-  key: keyId,
-  amount: amountPaise,
-  currency: currency || "INR",
-  name: "Temple Digital Platform",
-  description: "Booking Payment",
-  order_id: razorpayOrderId,
-  handler: async function (response) {
-    await api.post('/payments/verify', {
-      bookingId: bookingId,
-      razorpayOrderId: response.razorpay_order_id,
-      razorpayPaymentId: response.razorpay_payment_id,
-      razorpaySignature: response.razorpay_signature
-    });
-    alert("Payment successful & Booking Confirmed!");
-  }
-};
-const rzp = new window.Razorpay(options);
-rzp.open();
-```
+| `POST` | `/api/v1/payments/:id/refund` | Admin+ | `{"amountPaise": 50000}` | Refund payment |
 
 ---
 
@@ -183,10 +154,11 @@ rzp.open();
 | Method | Endpoint | Auth | Request Body | Description |
 |---|---|---|---|---|
 | `GET` | `/api/v1/temples/:templeId/donations/causes` | Public | *(None)* | List causes (Annadanam, Goshala, Renovation) |
-| `GET` | `/api/v1/temples/:templeId/donations/causes/:id` | Public | *(None)* | Cause description |
 | `POST` | `/api/v1/temples/:templeId/donations` | Devotee | `{"causeId": "...", "amountPaise": 50000, "donorName": "Suresh", "donorPhone": "+919876543210", "donorPan": "ABCDE1234F", "isAnonymous": false}` | Initiate monetary donation |
-| `GET` | `/api/v1/temples/:templeId/donations/my` | Devotee | *(None)* | Devotee donation history |
+| `GET` | `/api/v1/temples/:templeId/donations/me` | Devotee | `?page=1&limit=20` | Devotee donation history |
+| `GET` | `/api/v1/temples/:templeId/donations/:id` | Devotee | *(None)* | Donation details |
 | `GET` | `/api/v1/temples/:templeId/donations/:id/receipt` | Devotee | *(None)* | Get 80G tax receipt metadata |
+| `POST` | `/api/v1/temples/:templeId/donations/verify` | Devotee | `{"donationId": "...", "razorpayOrderId": "...", "razorpayPaymentId": "...", "razorpaySignature": "..."}` | Verify donation payment |
 
 ---
 
@@ -196,10 +168,11 @@ rzp.open();
 |---|---|---|---|---|
 | `GET` | `/api/v1/temples/:templeId/prasad/products` | Public | *(None)* | Browse Prasad catalog & remaining stock |
 | `GET` | `/api/v1/temples/:templeId/prasad/products/:id` | Public | *(None)* | Single Prasad product details |
-| `POST` | `/api/v1/temples/:templeId/prasad/orders` | Devotee | `{"addressId": "...", "items": [{"productId": "...", "quantity": 2}], "notes": "Deliver before 5 PM"}` | Place Prasad order (reserves inventory) |
-| `GET` | `/api/v1/temples/:templeId/prasad/orders/my` | Devotee | *(None)* | Devotee's Prasad order history |
+| `POST` | `/api/v1/temples/:templeId/prasad/orders` | Devotee | `{"addressId": "...", "items": [{"productId": "...", "quantity": 2}]}` | Place Prasad order (reserves inventory) |
+| `GET` | `/api/v1/temples/:templeId/prasad/orders/me` | Devotee | `?page=1&limit=20` | Devotee's Prasad order history |
 | `GET` | `/api/v1/temples/:templeId/prasad/orders/:id` | Devotee | *(None)* | Order status & items |
-| `PUT` | `/api/v1/temples/:templeId/prasad/orders/:id/status` | Staff+ | `{"status": "DISPATCHED", "trackingNumber": "TRK123456"}` | Update fulfillment state |
+| `POST` | `/api/v1/temples/:templeId/prasad/orders/verify` | Devotee | `{"orderId": "...", "razorpayOrderId": "...", "razorpayPaymentId": "...", "razorpaySignature": "..."}` | Verify prasad order payment |
+| `PUT` | `/api/v1/temples/:templeId/prasad/orders/:id/status` | Staff+ | `{"status": "DELIVERED"}` | Update fulfillment state |
 
 ---
 
@@ -209,10 +182,11 @@ rzp.open();
 |---|---|---|---|---|
 | `GET` | `/api/v1/temples/:templeId/accommodation/rooms` | Public | *(None)* | List all guest rooms & amenities |
 | `GET` | `/api/v1/temples/:templeId/accommodation/rooms/:id` | Public | *(None)* | Single room details |
-| `GET` | `/api/v1/temples/:templeId/accommodation/availability` | Public | `?checkIn=2026-08-25&checkOut=2026-08-28&capacity=2` | Check room availability for date range |
-| `POST` | `/api/v1/temples/:templeId/accommodation/bookings` | Devotee | `{"roomId": "...", "checkInDate": "2026-08-25", "checkOutDate": "2026-08-28", "guestName": "Anand", "guestPhone": "+919876543210", "numberOfGuests": 2}` | Book guest room |
-| `GET` | `/api/v1/temples/:templeId/accommodation/bookings/my` | Devotee | *(None)* | User's room bookings with QR pass |
+| `GET` | `/api/v1/temples/:templeId/accommodation/availability` | Public | `?checkIn=2026-08-25&checkOut=2026-08-28` | Check room availability for date range |
+| `POST` | `/api/v1/temples/:templeId/accommodation/bookings` | Devotee | `{"roomId": "...", "checkIn": "2026-08-25", "checkOut": "2026-08-28", "guests": 2}` | Book guest room |
+| `GET` | `/api/v1/temples/:templeId/accommodation/bookings/me` | Devotee | `?page=1&limit=20` | User's room bookings with QR pass |
 | `GET` | `/api/v1/temples/:templeId/accommodation/bookings/:id` | Devotee | *(None)* | Single room booking pass details |
+| `POST` | `/api/v1/temples/:templeId/accommodation/bookings/verify` | Devotee | `{"bookingId": "...", "razorpayOrderId": "...", "razorpayPaymentId": "...", "razorpaySignature": "..."}` | Verify accommodation payment |
 
 ---
 

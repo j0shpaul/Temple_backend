@@ -29,4 +29,3 @@ export const validationSchema = Joi.object({
     .valid("fatal", "error", "warn", "info", "debug", "trace")
     .default("info"),
 }).options({ abortEarly: false, allowUnknown: true });
-

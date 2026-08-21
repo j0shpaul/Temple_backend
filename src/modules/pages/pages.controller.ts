@@ -1,14 +1,5 @@
-import {
-  Controller,
-  Get,
-  Query,
-} from "@nestjs/common";
-import {
-  ApiTags,
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-} from "@nestjs/swagger";
+import { Controller, Get, Query } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from "@nestjs/swagger";
 import { PagesService } from "./pages.service";
 
 @ApiTags("Pages")
@@ -19,9 +10,15 @@ export class PagesController {
   @Get("home")
   @ApiOperation({
     summary: "Home Page Aggregation",
-    description: "Aggregates hero banner, today's darshan & aarti, featured pujas/sevas, upcoming events, announcements, and featured prasad in a single request.",
+    description:
+      "Aggregates hero banner, today's darshan & aarti, featured pujas/sevas, upcoming events, announcements, and featured prasad in a single request.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID (defaults to primary temple)" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID (defaults to primary temple)",
+  })
   @ApiResponse({ status: 200, description: "Home page aggregated dataset" })
   async getHomePage(@Query("templeId") templeId?: string) {
     return this.pagesService.getHomePage(templeId);
@@ -30,9 +27,15 @@ export class PagesController {
   @Get("about")
   @ApiOperation({
     summary: "About Page Aggregation",
-    description: "Aggregates temple identity, history, architecture, timings, guidelines, enshrined deities, and gallery preview.",
+    description:
+      "Aggregates temple identity, history, architecture, timings, guidelines, enshrined deities, and gallery preview.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
   @ApiResponse({ status: 200, description: "About page aggregated dataset" })
   async getAboutPage(@Query("templeId") templeId?: string) {
     return this.pagesService.getAboutPage(templeId);
@@ -41,10 +44,21 @@ export class PagesController {
   @Get("darshan")
   @ApiOperation({
     summary: "Darshan Page Aggregation",
-    description: "Aggregates darshan schedules, real-time slot availability for selected date, today's aarti timings, and darshan rules.",
+    description:
+      "Aggregates darshan schedules, real-time slot availability for selected date, today's aarti timings, and darshan rules.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiQuery({ name: "date", required: false, type: String, description: "Date in YYYY-MM-DD format (defaults to today)" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiQuery({
+    name: "date",
+    required: false,
+    type: String,
+    description: "Date in YYYY-MM-DD format (defaults to today)",
+  })
   @ApiResponse({ status: 200, description: "Darshan page aggregated dataset" })
   async getDarshanPage(
     @Query("templeId") templeId?: string,
@@ -56,11 +70,27 @@ export class PagesController {
   @Get("puja")
   @ApiOperation({
     summary: "Puja Ceremonies Page Aggregation",
-    description: "Aggregates active puja ceremonies, deity filter list, descriptions, pricing, duration, and available slots.",
+    description:
+      "Aggregates active puja ceremonies, deity filter list, descriptions, pricing, duration, and available slots.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiQuery({ name: "deityId", required: false, type: String, description: "Filter by deity ID" })
-  @ApiQuery({ name: "date", required: false, type: String, description: "Date in YYYY-MM-DD format" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiQuery({
+    name: "deityId",
+    required: false,
+    type: String,
+    description: "Filter by deity ID",
+  })
+  @ApiQuery({
+    name: "date",
+    required: false,
+    type: String,
+    description: "Date in YYYY-MM-DD format",
+  })
   @ApiResponse({ status: 200, description: "Puja page aggregated dataset" })
   async getPujaPage(
     @Query("templeId") templeId?: string,
@@ -73,11 +103,27 @@ export class PagesController {
   @Get("seva")
   @ApiOperation({
     summary: "Seva Offerings Page Aggregation",
-    description: "Aggregates active seva offerings, deity filter list, pricing, and available booking slots.",
+    description:
+      "Aggregates active seva offerings, deity filter list, pricing, and available booking slots.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiQuery({ name: "deityId", required: false, type: String, description: "Filter by deity ID" })
-  @ApiQuery({ name: "date", required: false, type: String, description: "Date in YYYY-MM-DD format" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiQuery({
+    name: "deityId",
+    required: false,
+    type: String,
+    description: "Filter by deity ID",
+  })
+  @ApiQuery({
+    name: "date",
+    required: false,
+    type: String,
+    description: "Date in YYYY-MM-DD format",
+  })
   @ApiResponse({ status: 200, description: "Seva page aggregated dataset" })
   async getSevaPage(
     @Query("templeId") templeId?: string,
@@ -90,12 +136,33 @@ export class PagesController {
   @Get("events")
   @ApiOperation({
     summary: "Events Page Aggregation",
-    description: "Aggregates paginated upcoming and active festivals, registration availability, and event spots.",
+    description:
+      "Aggregates paginated upcoming and active festivals, registration availability, and event spots.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiQuery({ name: "page", required: false, type: Number, description: "Page number (default 1)" })
-  @ApiQuery({ name: "limit", required: false, type: Number, description: "Page limit (default 10)" })
-  @ApiQuery({ name: "upcoming", required: false, type: Boolean, description: "Filter upcoming only (default true)" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiQuery({
+    name: "page",
+    required: false,
+    type: Number,
+    description: "Page number (default 1)",
+  })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    type: Number,
+    description: "Page limit (default 10)",
+  })
+  @ApiQuery({
+    name: "upcoming",
+    required: false,
+    type: Boolean,
+    description: "Filter upcoming only (default true)",
+  })
   @ApiResponse({ status: 200, description: "Events page aggregated dataset" })
   async getEventsPage(
     @Query("templeId") templeId?: string,
@@ -114,12 +181,31 @@ export class PagesController {
   @Get("prasad")
   @ApiOperation({
     summary: "Prasad Catalog Page Aggregation",
-    description: "Aggregates available prasad products with public stock indicator, prices, images, and pagination.",
+    description:
+      "Aggregates available prasad products with public stock indicator, prices, images, and pagination.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiQuery({ name: "page", required: false, type: Number, description: "Page number (default 1)" })
-  @ApiQuery({ name: "limit", required: false, type: Number, description: "Page limit (default 20)" })
-  @ApiResponse({ status: 200, description: "Prasad catalog aggregated dataset" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiQuery({
+    name: "page",
+    required: false,
+    type: Number,
+    description: "Page number (default 1)",
+  })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    type: Number,
+    description: "Page limit (default 20)",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Prasad catalog aggregated dataset",
+  })
   async getPrasadPage(
     @Query("templeId") templeId?: string,
     @Query("page") page?: number,
@@ -135,13 +221,37 @@ export class PagesController {
   @Get("accommodation")
   @ApiOperation({
     summary: "Accommodation Page Aggregation",
-    description: "Aggregates room types, pricing, amenities, house rules, and real-time room availability for check-in/out range.",
+    description:
+      "Aggregates room types, pricing, amenities, house rules, and real-time room availability for check-in/out range.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiQuery({ name: "checkIn", required: false, type: String, description: "Check-in date (YYYY-MM-DD)" })
-  @ApiQuery({ name: "checkOut", required: false, type: String, description: "Check-out date (YYYY-MM-DD)" })
-  @ApiQuery({ name: "capacity", required: false, type: Number, description: "Minimum room capacity" })
-  @ApiResponse({ status: 200, description: "Accommodation page aggregated dataset" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiQuery({
+    name: "checkIn",
+    required: false,
+    type: String,
+    description: "Check-in date (YYYY-MM-DD)",
+  })
+  @ApiQuery({
+    name: "checkOut",
+    required: false,
+    type: String,
+    description: "Check-out date (YYYY-MM-DD)",
+  })
+  @ApiQuery({
+    name: "capacity",
+    required: false,
+    type: Number,
+    description: "Minimum room capacity",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Accommodation page aggregated dataset",
+  })
   async getAccommodationPage(
     @Query("templeId") templeId?: string,
     @Query("checkIn") checkIn?: string,
@@ -159,10 +269,19 @@ export class PagesController {
   @Get("donations")
   @ApiOperation({
     summary: "Donations Page Aggregation",
-    description: "Aggregates active donation causes, 80G tax exemption guidelines, and suggested donation amounts.",
+    description:
+      "Aggregates active donation causes, 80G tax exemption guidelines, and suggested donation amounts.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiResponse({ status: 200, description: "Donations page aggregated dataset" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Donations page aggregated dataset",
+  })
   async getDonationsPage(@Query("templeId") templeId?: string) {
     return this.pagesService.getDonationsPage(templeId);
   }
@@ -170,10 +289,19 @@ export class PagesController {
   @Get("temple-overview")
   @ApiOperation({
     summary: "Temple Overview Aggregation",
-    description: "Comprehensive temple identity snapshot with timings, contact, location coordinates, deities, and photo gallery.",
+    description:
+      "Comprehensive temple identity snapshot with timings, contact, location coordinates, deities, and photo gallery.",
   })
-  @ApiQuery({ name: "templeId", required: false, type: String, description: "Temple ID" })
-  @ApiResponse({ status: 200, description: "Temple overview aggregated dataset" })
+  @ApiQuery({
+    name: "templeId",
+    required: false,
+    type: String,
+    description: "Temple ID",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Temple overview aggregated dataset",
+  })
   async getTempleOverview(@Query("templeId") templeId?: string) {
     return this.pagesService.getTempleOverview(templeId);
   }

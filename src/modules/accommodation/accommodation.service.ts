@@ -313,7 +313,11 @@ export class AccommodationService {
     return ApiResponseDto.success(result);
   }
 
-  async getBookingById(id: string): Promise<ApiResponseDto<any>> {
+  async getBookingById(
+    id: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<ApiResponseDto<any>> {
     const booking = await this.prisma.accommodationBooking.findUnique({
       where: { id },
       include: {
@@ -323,6 +327,18 @@ export class AccommodationService {
       },
     });
     if (!booking) throw new NotFoundException("Booking not found");
+
+    if (
+      userId &&
+      userRole &&
+      booking.userId !== userId &&
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(userRole)
+    ) {
+      throw new ForbiddenException(
+        "Cannot access another user's accommodation booking",
+      );
+    }
+
     return ApiResponseDto.success(booking);
   }
 

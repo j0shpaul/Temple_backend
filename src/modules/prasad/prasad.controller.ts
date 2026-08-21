@@ -151,8 +151,8 @@ export class PrasadController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get order by ID" })
-  async getOrder(@Param("id") id: string) {
-    return this.prasadService.getOrderById(id);
+  async getOrder(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.prasadService.getOrderById(id, user.id, user.role);
   }
 
   @Get("orders")

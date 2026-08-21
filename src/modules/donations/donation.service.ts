@@ -248,7 +248,11 @@ export class DonationService {
     return ApiResponseDto.success(result);
   }
 
-  async getById(id: string): Promise<ApiResponseDto<any>> {
+  async getById(
+    id: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<ApiResponseDto<any>> {
     const donation = await this.prisma.donation.findUnique({
       where: { id },
       include: {
@@ -259,15 +263,41 @@ export class DonationService {
       },
     });
     if (!donation) throw new NotFoundException("Donation not found");
+
+    if (
+      userId &&
+      userRole &&
+      donation.userId !== userId &&
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(userRole)
+    ) {
+      throw new ForbiddenException("Cannot access another user's donation");
+    }
+
     return ApiResponseDto.success(donation);
   }
 
-  async getReceipt(donationId: string): Promise<ApiResponseDto<any>> {
+  async getReceipt(
+    donationId: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<ApiResponseDto<any>> {
     const receipt = await this.prisma.donationReceipt.findUnique({
       where: { donationId },
       include: { donation: { include: { temple: true } } },
     });
     if (!receipt) throw new NotFoundException("Receipt not found");
+
+    if (
+      userId &&
+      userRole &&
+      receipt.donation.userId !== userId &&
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(userRole)
+    ) {
+      throw new ForbiddenException(
+        "Cannot access another user's donation receipt",
+      );
+    }
+
     return ApiResponseDto.success(receipt);
   }
 
