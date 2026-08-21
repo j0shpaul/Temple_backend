@@ -18,6 +18,27 @@
 
 ---
 
+## ⚡ 1.1 Fast Page-Level Read APIs (Recommended for Page Renders)
+
+> **💡 Best Practice**: Instead of making 5-10 separate requests per page, use these page aggregation endpoints to fetch all required view data in 1 network roundtrip:
+
+| Screen / Page | Endpoint | Description |
+|---|---|---|
+| **Home Screen** | `GET /api/v1/home` | Hero banner, today's darshan & aarti, featured pujas/sevas, events, announcements, and prasad |
+| **About Screen** | `GET /api/v1/about` | Temple identity, history, architecture, timings, guidelines, deities & photo gallery |
+| **Darshan Screen** | `GET /api/v1/darshan?date=YYYY-MM-DD` | Darshan schedules, today's aarti, and real-time slot availability |
+| **Puja Screen** | `GET /api/v1/puja?deityId=...&date=YYYY-MM-DD` | Puja ceremonies catalog with deity filters and available slots |
+| **Seva Screen** | `GET /api/v1/seva?deityId=...&date=YYYY-MM-DD` | Seva offerings catalog with deity filters and available slots |
+| **Events Screen** | `GET /api/v1/events?page=1&limit=10` | Upcoming festivals, spots remaining, and registration status |
+| **Prasad Screen** | `GET /api/v1/prasad?page=1&limit=20` | Prasad product catalog with stock status and images |
+| **Accommodation** | `GET /api/v1/accommodation?checkIn=...&checkOut=...` | Room types, pricing, amenities, house rules & real-time room availability |
+| **Donations Screen** | `GET /api/v1/donations` | Donation causes, 80G tax exemption info, suggested amounts |
+| **Overview Screen** | `GET /api/v1/temple-overview` | Full temple identity snapshot with timings, contact, location & gallery |
+
+*Note: Existing detailed resource APIs remain available for individual CRUD operations and mutations.*
+
+---
+
 ## 📦 2. Standard API Response Structure
 
 All API responses return a consistent JSON envelope:

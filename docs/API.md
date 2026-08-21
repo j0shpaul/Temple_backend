@@ -8,6 +8,7 @@
 
 ## Table of Contents
 
+0. [Page-Level Aggregation APIs (BFF Layer)](#0-page-level-aggregation-apis-bff-layer)
 1. [Authentication](#1-authentication)
 2. [Users & Addresses](#2-users--addresses)
 3. [Temples](#3-temples)
@@ -30,6 +31,62 @@
 20. [Standard Response Format](#20-standard-response-format)
 21. [Error Handling](#21-error-handling)
 22. [Pagination](#22-pagination)
+
+---
+
+## 0. Page-Level Aggregation APIs (BFF Layer)
+
+These endpoints aggregate multiple domain resources into a single frontend-optimized payload for fast 1-roundtrip page rendering:
+
+### `GET /home`
+- **Query**: `templeId` (optional)
+- **Description**: Returns temple identity, hero banner, today's darshan schedules & slots, today's aarti timings, featured pujas, featured sevas, upcoming events, active announcements, and featured prasad items.
+- **Cache**: 60s Redis cache.
+
+### `GET /about`
+- **Query**: `templeId` (optional)
+- **Description**: Returns temple basic profile, history, architecture, timings, guidelines, enshrined deities, and gallery preview.
+- **Cache**: 120s Redis cache.
+
+### `GET /darshan`
+- **Query**: `templeId` (optional), `date` (`YYYY-MM-DD`, optional)
+- **Description**: Returns darshan schedules, real-time slot availability for the selected date, today's aartis, and dress code guidelines.
+- **Cache**: 15s Redis cache.
+
+### `GET /puja`
+- **Query**: `templeId` (optional), `deityId` (optional), `date` (`YYYY-MM-DD`, optional)
+- **Description**: Returns puja ceremonies catalog, deity categories, and available booking slots for the date.
+- **Cache**: 30s Redis cache.
+
+### `GET /seva`
+- **Query**: `templeId` (optional), `deityId` (optional), `date` (`YYYY-MM-DD`, optional)
+- **Description**: Returns seva offerings catalog, deity categories, and available booking slots for the date.
+- **Cache**: 30s Redis cache.
+
+### `GET /events`
+- **Query**: `templeId` (optional), `page` (default 1), `limit` (default 10), `upcoming` (default true)
+- **Description**: Returns paginated active & upcoming festivals, spots remaining, and registration requirements.
+- **Cache**: 60s Redis cache.
+
+### `GET /prasad`
+- **Query**: `templeId` (optional), `page` (default 1), `limit` (default 20)
+- **Description**: Returns paginated prasad products with public stock status and images.
+- **Cache**: 60s Redis cache.
+
+### `GET /accommodation`
+- **Query**: `templeId` (optional), `checkIn` (optional), `checkOut` (optional), `capacity` (optional)
+- **Description**: Returns room types, pricing, amenities, house rules, and real-time room availability for check-in/out range.
+- **Cache**: 30s Redis cache.
+
+### `GET /donations`
+- **Query**: `templeId` (optional)
+- **Description**: Returns active donation causes, 80G tax exemption details, and suggested donation amounts.
+- **Cache**: 120s Redis cache.
+
+### `GET /temple-overview`
+- **Query**: `templeId` (optional)
+- **Description**: Comprehensive temple identity snapshot with timings, contact, location coordinates, deities, and photo gallery.
+- **Cache**: 120s Redis cache.
 
 ---
 

@@ -26,6 +26,7 @@ import { EventsModule } from "./modules/events/events.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { QrModule } from "./modules/qr/qr.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { PagesModule } from "./modules/pages/pages.module";
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { AdminModule } from "./modules/admin/admin.module";
     NotificationsModule,
     QrModule,
     AdminModule,
+    PagesModule,
   ],
 })
 export class AppModule {}
