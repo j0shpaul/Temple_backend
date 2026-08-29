@@ -19,8 +19,10 @@ import {
 } from "@nestjs/swagger";
 
 import { GalleryService } from "./gallery.service";
+import { MediaUploadService } from "./media-upload.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { ApiResponseDto } from "../../common/dto/api-response.dto";
@@ -28,7 +30,35 @@ import { ApiResponseDto } from "../../common/dto/api-response.dto";
 @ApiTags("Gallery")
 @Controller("temples/:templeId/gallery")
 export class GalleryController {
-  constructor(private galleryService: GalleryService) {}
+  constructor(
+    private galleryService: GalleryService,
+    private mediaUploadService: MediaUploadService,
+  ) {}
+
+  @Post("presigned-url")
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
+  @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Generate pre-signed S3/Cloudinary upload signature/URL (staff+)",
+  })
+  async getPresignedUploadUrl(
+    @Param("templeId") templeId: string,
+    @Body()
+    data: {
+      category: "gallery" | "paath" | "gurukul" | "events" | "deities" | "general";
+      fileName: string;
+      mimeType: string;
+      sizeBytes?: number;
+    },
+    @CurrentUser() user: any,
+  ) {
+    const result = await this.mediaUploadService.generatePresignedUpload(
+      { ...data, templeId },
+      user.role,
+    );
+    return ApiResponseDto.success(result);
+  }
 
   @Get()
   @ApiOperation({ summary: "List gallery items for a temple (public)" })
@@ -47,7 +77,7 @@ export class GalleryController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create gallery item (staff+)" })
@@ -60,7 +90,7 @@ export class GalleryController {
   }
 
   @Put(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update gallery item (staff+)" })
@@ -73,7 +103,7 @@ export class GalleryController {
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN")
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)

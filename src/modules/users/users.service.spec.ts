@@ -156,4 +156,29 @@ describe("UsersService", () => {
       expect(result.data).toEqual(address);
     });
   });
+
+  describe("updateLocation", () => {
+    it("should update user coordinates", async () => {
+      mockPrisma.user.update.mockResolvedValue({
+        id: "user-1",
+        latitude: 28.6139,
+        longitude: 77.209,
+      });
+
+      const result = await service.updateLocation("user-1", {
+        latitude: 28.6139,
+        longitude: 77.209,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual({
+        latitude: 28.6139,
+        longitude: 77.209,
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: "user-1" },
+        data: { latitude: 28.6139, longitude: 77.209 },
+      });
+    });
+  });
 });

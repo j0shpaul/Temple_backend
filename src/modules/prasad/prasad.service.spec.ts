@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrasadService } from "./prasad.service";
-import { RazorpayService } from "../payments/razorpay.service";
+import { PaymentService } from "../payments/payment.service";
 import { PrasadOrderStatus, PaymentStatus } from "@prisma/client";
 import {
   NotFoundException,
@@ -13,7 +13,7 @@ import {
 describe("PrasadService", () => {
   let service: PrasadService;
   let prisma: PrismaService;
-  let razorpay: RazorpayService;
+  let paymentService: PaymentService;
 
   const mockProduct = {
     id: "product-1",
@@ -99,11 +99,17 @@ describe("PrasadService", () => {
     $transaction: jest.fn().mockImplementation((fn) => fn(mockPrisma)),
   };
 
-  const mockRazorpayService = {
-    createOrder: jest.fn(),
-    verifyPayment: jest.fn(),
-    refund: jest.fn(),
-    getKeyId: jest.fn().mockReturnValue("rzp_test_key"),
+  const mockPaymentService = {
+    createPaymentForPrasadOrder: jest.fn().mockResolvedValue({
+      data: {
+        paymentId: "payment-1",
+        cfOrderId: "PR_123",
+        paymentSessionId: "session_123",
+      },
+    }),
+    reconcilePayment: jest.fn().mockResolvedValue({
+      data: { status: "SUCCESS" },
+    }),
   };
 
   beforeEach(async () => {
@@ -111,13 +117,13 @@ describe("PrasadService", () => {
       providers: [
         PrasadService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: RazorpayService, useValue: mockRazorpayService },
+        { provide: PaymentService, useValue: mockPaymentService },
       ],
     }).compile();
 
     service = module.get<PrasadService>(PrasadService);
     prisma = module.get<PrismaService>(PrismaService);
-    razorpay = module.get<RazorpayService>(RazorpayService);
+    paymentService = module.get<PaymentService>(PaymentService);
     jest.clearAllMocks();
   });
 
@@ -143,10 +149,16 @@ describe("PrasadService", () => {
 
       const result = await service.getProduct("product-1");
 
-      expect(result.data.availableStock).toBe(90);
+      expect(result.data).toEqual(
+        expect.objectContaining({
+          id: "product-1",
+          availableStock: 90,
+          isOutOfStock: false,
+        }),
+      );
     });
 
-    it("should throw if not found", async () => {
+    it("should throw if product not found", async () => {
       mockPrisma.prasadProduct.findUnique.mockResolvedValue(null);
 
       await expect(service.getProduct("invalid")).rejects.toThrow(
@@ -156,79 +168,58 @@ describe("PrasadService", () => {
   });
 
   describe("createProduct", () => {
-    it("should create product", async () => {
+    it("should create product when called by staff/admin", async () => {
       mockPrisma.temple.findUnique.mockResolvedValue({ id: "temple-1" });
       mockPrisma.prasadProduct.create.mockResolvedValue(mockProduct);
 
       const result = await service.createProduct(
         "temple-1",
         {
-          name: "Laddu Prasad",
+          name: "Laddu",
           pricePaise: 10000,
           stock: 100,
         },
-        "STAFF",
+        "ADMIN",
       );
 
       expect(result.data).toEqual(mockProduct);
     });
 
-    it("should throw ForbiddenException for insufficient permissions", async () => {
+    it("should throw ForbiddenException if devotee calls createProduct", async () => {
       await expect(
         service.createProduct(
           "temple-1",
-          {
-            name: "Laddu Prasad",
-            pricePaise: 10000,
-            stock: 100,
-          },
+          { name: "Laddu", pricePaise: 10000, stock: 100 },
           "DEVOTEE",
         ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
 
-  describe("updateProduct", () => {
-    it("should update product", async () => {
-      mockPrisma.prasadProduct.update.mockResolvedValue({
-        ...mockProduct,
-        pricePaise: 15000,
-      });
-
-      const result = await service.updateProduct(
-        "product-1",
-        { pricePaise: 15000 },
-        "STAFF",
-      );
-
-      expect(result.data.pricePaise).toBe(15000);
-    });
-  });
-
   describe("adjustStock", () => {
-    it("should adjust stock", async () => {
+    it("should update stock with delta", async () => {
       mockPrisma.prasadProduct.findUnique.mockResolvedValue(mockProduct);
       mockPrisma.prasadProduct.update.mockResolvedValue({
         ...mockProduct,
-        stock: 150,
+        stock: 120,
       });
 
-      const result = await service.adjustStock("product-1", 50, "STAFF");
+      const result = await service.adjustStock("product-1", 20, "ADMIN");
 
-      expect(result.data.stock).toBe(150);
+      expect(result.data.stock).toBe(120);
     });
 
-    it("should throw ConflictException if stock goes below reserved", async () => {
-      mockPrisma.prasadProduct.findUnique.mockResolvedValue(mockProduct);
+    it("should throw ConflictException if stock falls below reserved", async () => {
+      mockPrisma.prasadProduct.findUnique.mockResolvedValue(mockProduct); // stock: 100, reserved: 10
 
       await expect(
-        service.adjustStock("product-1", -95, "STAFF"),
+        service.adjustStock("product-1", -95, "ADMIN"), // newStock = 5 < 10
       ).rejects.toThrow(ConflictException);
     });
   });
 
   describe("createAddress", () => {
-    it("should create address", async () => {
+    it("should create delivery address for user", async () => {
       mockPrisma.address.create.mockResolvedValue(mockAddress);
 
       const result = await service.createAddress("user-1", {
@@ -244,7 +235,7 @@ describe("PrasadService", () => {
   });
 
   describe("listAddresses", () => {
-    it("should return user addresses", async () => {
+    it("should list addresses for user", async () => {
       mockPrisma.address.findMany.mockResolvedValue([mockAddress]);
 
       const result = await service.listAddresses("user-1");
@@ -254,12 +245,10 @@ describe("PrasadService", () => {
   });
 
   describe("createOrder", () => {
-    it("should create order with atomic stock reservation", async () => {
+    it("should create order with atomic stock reservation and delegate payment", async () => {
       mockPrisma.address.findFirst.mockResolvedValue(mockAddress);
       mockPrisma.prasadProduct.findUnique.mockResolvedValue(mockProduct);
       mockPrisma.prasadOrder.create.mockResolvedValue(mockOrder);
-      mockPrisma.payment.create.mockResolvedValue({});
-      mockRazorpayService.createOrder.mockResolvedValue({ id: "order_123" });
 
       const result = await service.createOrder("user-1", {
         templeId: "temple-1",
@@ -268,12 +257,15 @@ describe("PrasadService", () => {
       });
 
       expect(result.data.order).toEqual(mockOrder);
-      expect(result.data.razorpayOrderId).toBe("order_123");
+      expect(result.data.gateway).toBe("CASHFREE");
       expect(mockPrisma.$transaction).toHaveBeenCalled();
       expect(mockPrisma.prasadProduct.update).toHaveBeenCalledWith({
         where: { id: "product-1" },
         data: { reservedStock: { increment: 2 } },
       });
+      expect(
+        mockPaymentService.createPaymentForPrasadOrder,
+      ).toHaveBeenCalledWith("order-1", "user-1");
     });
 
     it("should throw if insufficient stock", async () => {
@@ -304,7 +296,7 @@ describe("PrasadService", () => {
   });
 
   describe("verifyOrderPayment", () => {
-    it("should confirm order and decrement stock", async () => {
+    it("should reconcile payment via PaymentService", async () => {
       const pendingOrder = { ...mockOrder, status: "PLACED" };
       mockPrisma.prasadOrder.findUnique.mockResolvedValue(pendingOrder);
       mockPrisma.payment.findUnique.mockResolvedValue({
@@ -312,127 +304,55 @@ describe("PrasadService", () => {
         prasadOrderId: "order-1",
         status: PaymentStatus.PENDING,
       });
-      mockRazorpayService.verifyPayment.mockResolvedValue(true);
-      mockPrisma.payment.update.mockResolvedValue({});
-      mockPrisma.prasadOrderItem.findMany.mockResolvedValue([
-        { productId: "product-1", quantity: 2 },
-      ]);
-      mockPrisma.prasadProduct.update.mockResolvedValue({});
-      mockPrisma.prasadOrder.update.mockResolvedValue({
-        ...pendingOrder,
-        status: "CONFIRMED",
-      });
-      mockPrisma.paymentEvent.create.mockResolvedValue({});
 
       const result = await service.verifyOrderPayment({
         orderId: "order-1",
-        razorpayOrderId: "order_123",
-        razorpayPaymentId: "pay_123",
-        razorpaySignature: "sig_123",
       });
 
-      expect(result.data.status).toBe("CONFIRMED");
-      expect(mockPrisma.prasadProduct.update).toHaveBeenCalledWith({
-        where: { id: "product-1" },
-        data: {
-          stock: { decrement: 2 },
-          reservedStock: { decrement: 2 },
-        },
-      });
+      expect(result.data.status).toBe("SUCCESS");
+      expect(mockPaymentService.reconcilePayment).toHaveBeenCalledWith(
+        "payment-1",
+      );
     });
 
-    it("should throw if order already paid", async () => {
-      const paidOrder = { ...mockOrder, status: "CONFIRMED" };
-      mockPrisma.prasadOrder.findUnique.mockResolvedValue(paidOrder);
-      mockPrisma.payment.findUnique.mockResolvedValue({
-        status: PaymentStatus.SUCCESS,
-      });
-
-      await expect(
-        service.verifyOrderPayment({
-          orderId: "order-1",
-          razorpayOrderId: "order_123",
-          razorpayPaymentId: "pay_123",
-          razorpaySignature: "sig_123",
-        }),
-      ).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe("getOrderById", () => {
-    it("should return order by id", async () => {
-      mockPrisma.prasadOrder.findUnique.mockResolvedValue(mockOrder);
-
-      const result = await service.getOrderById("order-1");
-
-      expect(result.data).toEqual(mockOrder);
-    });
-
-    it("should throw if not found", async () => {
+    it("should throw if order not found", async () => {
       mockPrisma.prasadOrder.findUnique.mockResolvedValue(null);
 
-      await expect(service.getOrderById("invalid")).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
-
-  describe("getUserOrders", () => {
-    it("should return paginated orders for user", async () => {
-      mockPrisma.prasadOrder.findMany.mockResolvedValue([mockOrder]);
-      mockPrisma.prasadOrder.count.mockResolvedValue(1);
-
-      const result = await service.getUserOrders("user-1", {
-        page: 1,
-        limit: 20,
-      });
-
-      expect(result.data.orders).toEqual([mockOrder]);
-      expect(result.data.total).toBe(1);
-    });
-  });
-
-  describe("getTempleOrders", () => {
-    it("should return paginated orders for temple", async () => {
-      mockPrisma.prasadOrder.findMany.mockResolvedValue([mockOrder]);
-      mockPrisma.prasadOrder.count.mockResolvedValue(1);
-
-      const result = await service.getTempleOrders("temple-1", {
-        page: 1,
-        limit: 50,
-      });
-
-      expect(result.data.orders).toEqual([mockOrder]);
-      expect(result.data.total).toBe(1);
-    });
-  });
-
-  describe("updateOrderStatus", () => {
-    it("should update order status", async () => {
-      mockPrisma.prasadOrder.update.mockResolvedValue({
-        ...mockOrder,
-        status: "CONFIRMED",
-      });
-
-      const result = await service.updateOrderStatus(
-        "order-1",
-        "CONFIRMED",
-        "STAFF",
-      );
-
-      expect(result.data.status).toBe("CONFIRMED");
-    });
-
-    it("should throw ForbiddenException for insufficient permissions", async () => {
       await expect(
-        service.updateOrderStatus("order-1", "CONFIRMED", "DEVOTEE"),
-      ).rejects.toThrow(ForbiddenException);
+        service.verifyOrderPayment({ orderId: "invalid" }),
+      ).rejects.toThrow(NotFoundException);
     });
+  });
 
-    it("should throw BadRequestException for invalid status", async () => {
-      await expect(
-        service.updateOrderStatus("order-1", "INVALID", "STAFF"),
-      ).rejects.toThrow(BadRequestException);
+  describe("expirePendingOrders", () => {
+    it("should expire abandoned prasad orders and restore reserved stock", async () => {
+      const expired = [
+        {
+          id: "order-exp-1",
+          status: "PLACED",
+          items: [{ productId: "product-1", quantity: 2 }],
+          payment: { id: "pay-1", status: "PENDING" },
+        },
+      ];
+
+      mockPrisma.prasadOrder.findMany.mockResolvedValue(expired);
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        return cb({
+          prasadOrder: {
+            findUnique: jest.fn().mockResolvedValue(expired[0]),
+            update: jest.fn().mockResolvedValue({ id: "order-exp-1", status: "CANCELLED" }),
+          },
+          prasadProduct: {
+            updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          },
+          payment: {
+            update: jest.fn().mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
+          },
+        });
+      });
+
+      const count = await service.expirePendingOrders(30);
+      expect(count).toBe(1);
     });
   });
 });

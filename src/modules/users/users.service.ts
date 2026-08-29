@@ -73,6 +73,13 @@ export class UsersService {
         name: true,
         role: true,
         status: true,
+        isVerified: true,
+        dateOfBirth: true,
+        gender: true,
+        emergencyContact: true,
+        latitude: true,
+        longitude: true,
+        isProfileComplete: true,
         createdAt: true,
         addresses: true,
         bookings: {
@@ -240,5 +247,23 @@ export class UsersService {
 
     await this.prisma.address.delete({ where: { id: addressId } });
     return ApiResponseDto.success({ message: "Address deleted" });
+  }
+
+  async updateLocation(
+    userId: string,
+    data: { latitude: number; longitude: number },
+  ): Promise<ApiResponseDto<{ latitude: number; longitude: number }>> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        latitude: data.latitude,
+        longitude: data.longitude,
+      },
+    });
+
+    return ApiResponseDto.success({
+      latitude: data.latitude,
+      longitude: data.longitude,
+    });
   }
 }

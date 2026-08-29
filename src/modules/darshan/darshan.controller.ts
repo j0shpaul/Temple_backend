@@ -21,6 +21,7 @@ import {
 import { DarshanService } from "./darshan.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -84,7 +85,7 @@ export class DarshanController {
   }
 
   @Post("schedules")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create darshan schedule (staff+)" })
@@ -97,7 +98,7 @@ export class DarshanController {
   }
 
   @Put("schedules/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update darshan schedule (staff+)" })
@@ -110,7 +111,7 @@ export class DarshanController {
   }
 
   @Put("slots/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update darshan slot capacity/status (staff+)" })
@@ -123,7 +124,7 @@ export class DarshanController {
   }
 
   @Delete("schedules/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN")
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)

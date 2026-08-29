@@ -22,6 +22,7 @@ import { NotificationsService } from "./notifications.service";
 import { AnnouncementService } from "./announcement.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -111,7 +112,7 @@ export class NotificationsController {
   }
 
   @Post("temples/:templeId/announcements")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create announcement (manager+)" })
@@ -130,7 +131,7 @@ export class NotificationsController {
   }
 
   @Put("temples/:templeId/announcements/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update announcement (manager+)" })
@@ -143,7 +144,7 @@ export class NotificationsController {
   }
 
   @Post("temples/:templeId/announcements/:id/publish")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Publish announcement (manager+)" })
@@ -152,7 +153,7 @@ export class NotificationsController {
   }
 
   @Delete("temples/:templeId/announcements/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN")
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)

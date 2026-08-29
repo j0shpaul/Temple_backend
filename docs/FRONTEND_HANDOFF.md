@@ -110,8 +110,9 @@ Authentication is passwordless via phone number and OTP.
       "user": {
         "id": "usr_123",
         "phone": "+919876543210",
-        "name": "Devotee Name",
-        "role": "DEVOTEE"
+        "name": null,
+        "role": "DEVOTEE",
+        "isProfileComplete": false
       },
       "tokens": {
         "accessToken": "eyJhbGciOi...",
@@ -121,6 +122,42 @@ Authentication is passwordless via phone number and OTP.
     }
   }
   ```
+
+> **Frontend Routing Rule**: Check `user.isProfileComplete`:
+> - If `isProfileComplete === false`: Redirect user to Profile Completion Screen (`POST /api/v1/auth/complete-profile`).
+> - If `isProfileComplete === true`: Proceed directly to Home Screen.
+
+---
+
+### Step 3: Complete User Profile Onboarding (Post-OTP)
+- **Endpoint**: `POST /api/v1/auth/complete-profile`
+- **Header**: `Authorization: Bearer <accessToken>`
+- **Body**:
+  ```json
+  {
+    "name": "Rahul Sharma",
+    "email": "rahul@example.com",
+    "dateOfBirth": "1990-01-15",
+    "gender": "Male",
+    "emergencyContact": "+919876543210"
+  }
+  ```
+- **Response**: Returns updated user object with `isProfileComplete: true`.
+
+---
+
+### Step 4: Update User Geolocation Coordinates
+- **Endpoint**: `PUT /api/v1/users/location`
+- **Header**: `Authorization: Bearer <accessToken>`
+- **Body**:
+  ```json
+  {
+    "latitude": 28.6139,
+    "longitude": 77.2090
+  }
+  ```
+- **Response**: `{ "success": true, "data": { "latitude": 28.6139, "longitude": 77.2090 } }`
+- **Behavior**: Stores user coordinates. Nearby distance `distanceKm` will be returned in `/home` and `/temple-overview`. Location is strictly private and accessible only by the user or admins via RBAC.
 
 ---
 

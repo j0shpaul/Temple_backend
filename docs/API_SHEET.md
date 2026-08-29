@@ -65,18 +65,21 @@ All responses follow this consistent JSON structure:
 | Method | Endpoint | Request Body | Response Payload / Behavior |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/send-otp` | `{"phone": "+919876543210"}` | `{"message": "OTP sent to your phone number"}` (In dev: includes OTP) |
-| `POST` | `/api/v1/auth/verify-otp` | `{"phone": "+919876543210", "otp": "123456"}` | `{"user": {"id": "usr_...", "phone": "...", "role": "DEVOTEE"}, "tokens": {"accessToken": "...", "refreshToken": "...", "expiresIn": 900}}` |
+| `POST` | `/api/v1/auth/verify-otp` | `{"phone": "+919876543210", "otp": "123456"}` | `{"user": {"id": "usr_...", "phone": "...", "role": "DEVOTEE", "isProfileComplete": false}, "tokens": {"accessToken": "...", "refreshToken": "...", "expiresIn": 900}}` |
+| `POST` | `/api/v1/auth/complete-profile` | `{"name": "Rahul Sharma", "email": "rahul@example.com", "dateOfBirth": "1990-01-15", "gender": "Male"}` | Returns updated user profile with `isProfileComplete: true` |
 | `POST` | `/api/v1/auth/refresh` | `{"refreshToken": "..."}` | `{"accessToken": "...", "refreshToken": "..."}` |
 | `POST` | `/api/v1/auth/logout` | `{"refreshToken": "..."}` | `{"message": "Logged out successfully"}` |
-| `GET` | `/api/v1/auth/me` | *(None)* | Returns authenticated user session profile |
 
 ---
 
 | Method | Endpoint | Auth | Request Body | Description |
 |---|---|---|---|---|
+| `GET` | `/api/v1/users/me` | Devotee | *(None)* | Get devotee session profile & recent bookings/donations |
 | `GET` | `/api/v1/users/profile` | Devotee | *(None)* | Get devotee profile |
 | `GET` | `/api/v1/auth/profile` | Devotee | *(None)* | Get devotee auth profile |
 | `POST` | `/api/v1/auth/profile` | Devotee | `{"name": "string", "email": "string"}` | Update devotee profile |
+| `POST` | `/api/v1/auth/complete-profile` | Devotee | `{"name": "string", "email": "string", "dateOfBirth": "ISO date", "gender": "string", "emergencyContact": "string"}` | Complete user profile registration details (`isProfileComplete=true`) |
+| `PUT` | `/api/v1/users/location` | Devotee | `{"latitude": 28.6139, "longitude": 77.2090}` | Update devotee location coordinates (-90 to 90 lat, -180 to 180 lng) |
 | `POST` | `/api/v1/users/addresses` | Devotee | `{"line1": "string", "line2": "string", "city": "string", "state": "string", "pincode": "string", "phone": "string", "isDefault": boolean}` | Create delivery address |
 | `PUT` | `/api/v1/users/addresses/:addressId` | Devotee | `{"line1": "string", "city": "string", "pincode": "string"}` | Update address |
 | `DELETE` | `/api/v1/users/addresses/:addressId` | Devotee | *(None)* | Delete address |

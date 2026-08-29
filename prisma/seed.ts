@@ -1,660 +1,720 @@
-import { PrismaClient, Role, UserStatus, TempleStatus, SlotStatus, AartiStatus, EventStatus, RoomStatus, PaymentStatus, BookingStatus, AccommodationStatus, PrasadOrderStatus, DonationStatus, AnnouncementStatus, AnnouncementPriority, NotificationType, NotificationStatus, NotificationChannel, MediaType, MediaProvider, CrowdLevel } from '@prisma/client';
-import * as crypto from 'crypto';
+import {
+  PrismaClient,
+  Role,
+  UserStatus,
+  TempleStatus,
+  SlotStatus,
+  AartiStatus,
+  RoomStatus,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function hashPassword(password: string): Promise<string> {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
+// ==============================================================================
+// 1. PRODUCTION-SAFE MASTER DATA SEED (NON-DESTRUCTIVE UPSERTS ONLY)
+// ==============================================================================
+export async function seedProductionMasterData(client: PrismaClient = prisma) {
+  console.log("🔒 [PRODUCTION SEED] Ensuring master catalog without deleting data...");
 
-async function main() {
-  console.log('🌱 Starting database seed...');
-
-  // Clear existing data (in reverse order of dependencies)
-  console.log('🧹 Cleaning existing data...');
-  await prisma.paymentEvent.deleteMany();
-  await prisma.payment.deleteMany();
-  await prisma.checkIn.deleteMany();
-  await prisma.bookingAttendee.deleteMany();
-  await prisma.booking.deleteMany();
-  await prisma.accommodationBooking.deleteMany();
-  await prisma.eventRegistration.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.prasadOrderItem.deleteMany();
-  await prisma.prasadOrder.deleteMany();
-  await prisma.address.deleteMany();
-  await prisma.prasadProduct.deleteMany();
-  await prisma.donationReceipt.deleteMany();
-  await prisma.donation.deleteMany();
-  await prisma.donationCause.deleteMany();
-  await prisma.announcement.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.crowdSnapshot.deleteMany();
-  await prisma.auditLog.deleteMany();
-  await prisma.room.deleteMany();
-  await prisma.galleryItem.deleteMany();
-  await prisma.media.deleteMany();
-  await prisma.sevaSlot.deleteMany();
-  await prisma.seva.deleteMany();
-  await prisma.pujaSlot.deleteMany();
-  await prisma.puja.deleteMany();
-  await prisma.darshanSlot.deleteMany();
-  await prisma.darshanSchedule.deleteMany();
-  await prisma.aartiSchedule.deleteMany();
-  await prisma.deity.deleteMany();
-  await prisma.templeInformation.deleteMany();
-  await prisma.temple.deleteMany();
-  await prisma.refreshToken.deleteMany();
-  await prisma.user.deleteMany();
-
-  console.log('✅ Cleaned existing data');
-
-  // ============== USERS ==============
-  console.log('👤 Creating users...');
-  const superAdmin = await prisma.user.create({
-    data: {
-      phone: '+919999999999',
-      email: 'superadmin@temple.com',
-      name: 'Super Admin',
+  // 1. Ensure Super Admin Account exists
+  const superAdmin = await client.user.upsert({
+    where: { phone: "+919999999999" },
+    update: {
+      role: Role.SUPER_ADMIN,
+      status: UserStatus.ACTIVE,
+      isVerified: true,
+    },
+    create: {
+      phone: "+919999999999",
+      email: "superadmin@temple.com",
+      name: "Super Admin",
       role: Role.SUPER_ADMIN,
       status: UserStatus.ACTIVE,
       isVerified: true,
     },
   });
 
-  const admin = await prisma.user.create({
+  // 2. Ensure Primary Temple exists
+  let temple = await client.temple.findFirst({
+    where: { name: "Sri Venkateswara Temple" },
+  });
+
+  if (!temple) {
+    temple = await client.temple.create({
+      data: {
+        name: "Sri Venkateswara Temple",
+        description: "Ancient temple dedicated to Lord Venkateswara",
+        address: "Tirumala Hills",
+        city: "Tirupati",
+        state: "Andhra Pradesh",
+        country: "India",
+        pincode: "517504",
+        latitude: 13.6833,
+        longitude: 79.35,
+        status: TempleStatus.ACTIVE,
+        establishedYear: 300,
+        contactPhone: "+918772263333",
+        contactEmail: "info@tirumala.org",
+      },
+    });
+  }
+
+  // 3. Ensure Temple Information exists
+  await client.templeInformation.upsert({
+    where: { templeId: temple.id },
+    update: {},
+    create: {
+      templeId: temple.id,
+      history: "The temple has a rich history dating back to 300 AD...",
+      architecture: "Dravidian style architecture with gold-plated dome",
+      timings: "Open 24 hours for darshan",
+      guidelines: "Traditional dress code required. No phones inside sanctum.",
+      about: "One of the most visited temples in the world",
+    },
+  });
+
+  // 4. Ensure Deities exist
+  let mainDeity = await client.deity.findFirst({
+    where: { templeId: temple.id, name: "Lord Venkateswara" },
+  });
+  if (!mainDeity) {
+    mainDeity = await client.deity.create({
+      data: {
+        templeId: temple.id,
+        name: "Lord Venkateswara",
+        description: "Main deity of the temple",
+        significance: "Incarnation of Lord Vishnu",
+        displayOrder: 1,
+        isActive: true,
+      },
+    });
+  }
+
+  let consortDeity = await client.deity.findFirst({
+    where: { templeId: temple.id, name: "Goddess Lakshmi" },
+  });
+  if (!consortDeity) {
+    consortDeity = await client.deity.create({
+      data: {
+        templeId: temple.id,
+        name: "Goddess Lakshmi",
+        description: "Consort of Lord Venkateswara",
+        significance: "Goddess of wealth and prosperity",
+        displayOrder: 2,
+        isActive: true,
+      },
+    });
+  }
+
+  // 5. Ensure Aarti Schedules exist
+  const aartis = [
+    { name: "Suprabhatam", startTime: "03:00 AM", endTime: "04:00 AM", desc: "Awakening of the Lord" },
+    { name: "Thomala Seva", startTime: "04:30 AM", endTime: "05:30 AM", desc: "Flower decoration" },
+    { name: "Archana", startTime: "06:00 AM", endTime: "07:00 AM", desc: "Chanting of 1000 names" },
+    { name: "Naivedyam", startTime: "12:00 PM", endTime: "12:30 PM", desc: "Food offering" },
+    { name: "Sandhya Aarti", startTime: "06:30 PM", endTime: "07:30 PM", desc: "Evening lamp offering" },
+    { name: "Ekanta Seva", startTime: "10:30 PM", endTime: "11:00 PM", desc: "Putting the Lord to rest" },
+  ];
+
+  for (let i = 0; i < aartis.length; i++) {
+    const existing = await client.aartiSchedule.findFirst({
+      where: { templeId: temple.id, name: aartis[i].name },
+    });
+    if (!existing) {
+      await client.aartiSchedule.create({
+        data: {
+          templeId: temple.id,
+          name: aartis[i].name,
+          description: aartis[i].desc,
+          startTime: aartis[i].startTime,
+          endTime: aartis[i].endTime,
+          displayOrder: i + 1,
+          status: AartiStatus.ACTIVE,
+        },
+      });
+    }
+  }
+
+  // 6. Ensure Donation Causes exist
+  const causes = [
+    { name: "Nitya Annadanam", slug: "nitya-annadanam", desc: "Free food distribution for devotees" },
+    { name: "Goshala Maintenance", slug: "goshala-maintenance", desc: "Protection and care of sacred cows" },
+    { name: "Temple Renovation & Heritage", slug: "temple-renovation", desc: "Preservation of ancient Mandir architecture" },
+    { name: "Veda Patashala & Sanskrit", slug: "veda-patashala", desc: "Support Vedic education and student boarding" },
+  ];
+
+  for (const c of causes) {
+    await client.donationCause.upsert({
+      where: {
+        templeId_slug: {
+          templeId: temple.id,
+          slug: c.slug,
+        },
+      },
+      update: {
+        name: c.name,
+        description: c.desc,
+      },
+      create: {
+        templeId: temple.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.desc,
+        isActive: true,
+      },
+    });
+  }
+
+  // 7. Ensure Gurukul & Daily Dincharya exists
+  const existingGurukul = await client.gurukul.findFirst({
+    where: { templeId: temple.id },
+  });
+
+  if (!existingGurukul) {
+    await client.gurukul.create({
+      data: {
+        templeId: temple.id,
+        name: "Shree Neelkantheshwar Mahadev Ved Vedang Gurukulam",
+        description: "Traditional Vedic Gurukul & Sant Ashram",
+        about: "Vedic Gurukul dedicated to the preservation and teaching of Shukla Yajurveda, Vedang, and Sanskrit Shastras under the sacred lineage of Tapaswi Sant.",
+        philosophy: "Sanatan Vedic Gurukul Parampara cultivating character, Dharma, and Shastric mastery.",
+        admissionInfo: "Pravesh open for eligible students aged 8-14 years. Boarding, Vedic studies, Sanskrit grammar, and holistic discipline provided.",
+        contactInfo: "gurukul@temple.org | +91 99999 99999",
+        rules: "Strict adherence to daily Dincharya routine, Brahmacharya, Ahimsa, and traditional Vedic lifestyle.",
+        isPublished: true,
+        schedules: {
+          create: [
+            { activityName: "Pratah Smaran", description: "Morning awakening, Snan & Vedic Chanting", startTime: "04:00 AM", endTime: "05:30 AM", displayOrder: 1, isActive: true },
+            { activityName: "First Class", description: "Veda Paath, Sandhya Vandanam & Sanskrit Grammar", startTime: "08:00 AM", endTime: "11:00 AM", displayOrder: 2, isActive: true },
+            { activityName: "Second Class", description: "Shastra Adhyayan, Jyotish, Upanishads", startTime: "02:00 PM", endTime: "04:00 PM", displayOrder: 3, isActive: true },
+            { activityName: "Sandhya Aarti", description: "Maha Aarti, Stotra Paath & Satsang", startTime: "06:00 PM", endTime: "07:30 PM", displayOrder: 4, isActive: true },
+          ],
+        },
+      },
+    });
+  }
+
+  // 8. Ensure Nitya Paath item exists
+  const existingPaath = await client.paath.findFirst({
+    where: { templeId: temple.id, title: "Shiva Tandava Stotram" },
+  });
+  if (!existingPaath) {
+    await client.paath.create({
+      data: {
+        templeId: temple.id,
+        title: "Shiva Tandava Stotram",
+        sanskritText: "जटाटवीगलज्जलप्रवाहपावितस्थले गलेऽवलम्ब्य लम्बितां भुजङ्गतुङ्गमालिकाम्। डमड्डमड्डमड्डमन्निनादवड्डमर्वयं चकार चण्डताण्डवं तनोतु नः शिवः शिवम्॥",
+        transliteration: "Jatatavigalajjala pravahapavitasthale Galeavalambya lambitam bhujangatungamalikam | Damad damad damad daman ninadavadamarvayam Chakara chandatandavam tanotu nah shivah shivam ||",
+        hindiMeaning: "जिन शिव जी के सघन जटा रूपी वन से बहती हुई गंगा नदी की धाराएं उनके पवित्र कंठ को प्रक्षालित करती हैं, वे भगवान शिव हमारा कल्याण करें।",
+        englishMeaning: "May Lord Shiva, whose neck is purified by the flow of water cascading from the forest of his matted hair, bless us with auspiciousness.",
+        audioUrl: "https://assets.temple.org/audio/shiva_tandava.mp3",
+        durationSeconds: 360,
+        category: "Stotram",
+        displayOrder: 1,
+        isPublished: true,
+      },
+    });
+  }
+
+  console.log("✓ [PRODUCTION SEED] Master data safely initialized without modifying transactional data.");
+  return { templeId: temple.id, superAdminId: superAdmin.id };
+}
+
+// ==============================================================================
+// 2. DEVELOPMENT / TEST SEED WITH CLEAN RESET (BLOCKED IN PRODUCTION)
+// ==============================================================================
+export async function resetAndSeedDevelopmentData(client: PrismaClient = prisma) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "FATAL: Destructive database reset and demo data seeding cannot be executed in production environment (NODE_ENV=production)!"
+    );
+  }
+
+  console.log("🧹 Cleaning existing development data...");
+  await client.paymentEvent.deleteMany();
+  await client.payment.deleteMany();
+  await client.jigyasa.deleteMany();
+  await client.mahaprasadBooking.deleteMany();
+  await client.mahaprasadSlot.deleteMany();
+  await client.gurukulAdmission.deleteMany();
+  await client.gurukulSchedule.deleteMany();
+  await client.gurukul.deleteMany();
+  await client.paath.deleteMany();
+  await client.checkIn.deleteMany();
+  await client.bookingAttendee.deleteMany();
+  await client.booking.deleteMany();
+  await client.accommodationBooking.deleteMany();
+  await client.eventRegistration.deleteMany();
+  await client.event.deleteMany();
+  await client.prasadOrderItem.deleteMany();
+  await client.prasadOrder.deleteMany();
+  await client.address.deleteMany();
+  await client.prasadProduct.deleteMany();
+  await client.donationReceipt.deleteMany();
+  await client.donation.deleteMany();
+  await client.donationCause.deleteMany();
+  await client.announcement.deleteMany();
+  await client.notification.deleteMany();
+  await client.crowdSnapshot.deleteMany();
+  await client.auditLog.deleteMany();
+  await client.room.deleteMany();
+  await client.galleryItem.deleteMany();
+  await client.media.deleteMany();
+  await client.sevaSlot.deleteMany();
+  await client.seva.deleteMany();
+  await client.pujaSlot.deleteMany();
+  await client.puja.deleteMany();
+  await client.darshanSlot.deleteMany();
+  await client.darshanSchedule.deleteMany();
+  await client.aartiSchedule.deleteMany();
+  await client.deity.deleteMany();
+  await client.templeInformation.deleteMany();
+  await client.staffAssignment.deleteMany();
+  await client.temple.deleteMany();
+  await client.refreshToken.deleteMany();
+  await client.user.deleteMany();
+  console.log("✅ Cleaned existing development data");
+
+  // ============== USERS ==============
+  console.log("👤 Creating users...");
+  const superAdmin = await client.user.create({
     data: {
-      phone: '+918888888888',
-      email: 'admin@temple.com',
-      name: 'Temple Admin',
+      phone: "+919999999999",
+      email: "superadmin@temple.com",
+      name: "Super Admin",
+      role: Role.SUPER_ADMIN,
+      status: UserStatus.ACTIVE,
+      isVerified: true,
+    },
+  });
+
+  const admin = await client.user.create({
+    data: {
+      phone: "+918888888888",
+      email: "admin@temple.com",
+      name: "Temple Admin",
       role: Role.ADMIN,
       status: UserStatus.ACTIVE,
       isVerified: true,
     },
   });
 
-  const manager = await prisma.user.create({
+  const manager = await client.user.create({
     data: {
-      phone: '+917777777777',
-      email: 'manager@temple.com',
-      name: 'Temple Manager',
+      phone: "+917777777777",
+      email: "manager@temple.com",
+      name: "Temple Manager",
       role: Role.MANAGER,
       status: UserStatus.ACTIVE,
       isVerified: true,
     },
   });
 
-  const staff = await prisma.user.create({
+  const staff = await client.user.create({
     data: {
-      phone: '+916666666666',
-      email: 'staff@temple.com',
-      name: 'Temple Staff',
+      phone: "+916666666666",
+      email: "staff@temple.com",
+      name: "Temple Staff",
       role: Role.STAFF,
       status: UserStatus.ACTIVE,
       isVerified: true,
     },
   });
 
-  const devotee1 = await prisma.user.create({
+  const devotee1 = await client.user.create({
     data: {
-      phone: '+919876543210',
-      email: 'devotee1@example.com',
-      name: 'Rajesh Kumar',
+      phone: "+919876543210",
+      email: "devotee1@example.com",
+      name: "Rajesh Kumar",
       role: Role.DEVOTEE,
       status: UserStatus.ACTIVE,
       isVerified: true,
     },
   });
 
-  const devotee2 = await prisma.user.create({
+  const devotee2 = await client.user.create({
     data: {
-      phone: '+919876543211',
-      email: 'devotee2@example.com',
-      name: 'Priya Sharma',
+      phone: "+919876543211",
+      email: "devotee2@example.com",
+      name: "Priya Sharma",
       role: Role.DEVOTEE,
       status: UserStatus.ACTIVE,
       isVerified: true,
     },
   });
-
-  console.log('✅ Users created');
 
   // ============== TEMPLE ==============
-  console.log('🏛️ Creating temple...');
-  const temple = await prisma.temple.create({
+  console.log("🏛️ Creating temple...");
+  const temple = await client.temple.create({
     data: {
-      name: 'Sri Venkateswara Temple',
-      description: 'Ancient temple dedicated to Lord Venkateswara',
-      address: 'Tirumala Hills',
-      city: 'Tirupati',
-      state: 'Andhra Pradesh',
-      country: 'India',
-      pincode: '517504',
+      name: "Sri Venkateswara Temple",
+      description: "Ancient temple dedicated to Lord Venkateswara",
+      address: "Tirumala Hills",
+      city: "Tirupati",
+      state: "Andhra Pradesh",
+      country: "India",
+      pincode: "517504",
       latitude: 13.6833,
-      longitude: 79.3500,
+      longitude: 79.35,
       status: TempleStatus.ACTIVE,
       establishedYear: 300,
-      contactPhone: '+918772263333',
-      contactEmail: 'info@tirumala.org',
+      contactPhone: "+918772263333",
+      contactEmail: "info@tirumala.org",
     },
   });
 
-  // Temple Information
-  await prisma.templeInformation.create({
+  // Assign staff, manager, admin to temple
+  await client.staffAssignment.createMany({
+    data: [
+      { userId: admin.id, templeId: temple.id },
+      { userId: manager.id, templeId: temple.id },
+      { userId: staff.id, templeId: temple.id },
+    ],
+  });
+
+  await client.templeInformation.create({
     data: {
       templeId: temple.id,
-      history: 'The temple has a rich history dating back to 300 AD...',
-      architecture: 'Dravidian style architecture with gold-plated dome',
-      timings: 'Open 24 hours for darshan',
-      guidelines: 'Traditional dress code required. No phones inside sanctum.',
-      about: 'One of the most visited temples in the world',
+      history: "The temple has a rich history dating back to 300 AD...",
+      architecture: "Dravidian style architecture with gold-plated dome",
+      timings: "Open 24 hours for darshan",
+      guidelines: "Traditional dress code required. No phones inside sanctum.",
+      about: "One of the most visited temples in the world",
     },
   });
 
-  console.log('✅ Temple created');
-
-  // ============== DEITIES ==============
-  console.log('🕉️ Creating deities...');
-  const mainDeity = await prisma.deity.create({
+  // Deities
+  const mainDeity = await client.deity.create({
     data: {
       templeId: temple.id,
-      name: 'Lord Venkateswara',
-      description: 'Main deity of the temple',
-      significance: 'Incarnation of Lord Vishnu',
+      name: "Lord Venkateswara",
+      description: "Main deity of the temple",
+      significance: "Incarnation of Lord Vishnu",
       displayOrder: 1,
       isActive: true,
     },
   });
 
-  await prisma.deity.create({
+  await client.deity.create({
     data: {
       templeId: temple.id,
-      name: 'Goddess Lakshmi',
-      description: 'Consort of Lord Venkateswara',
-      significance: 'Goddess of wealth and prosperity',
+      name: "Goddess Lakshmi",
+      description: "Consort of Lord Venkateswara",
+      significance: "Goddess of wealth and prosperity",
       displayOrder: 2,
       isActive: true,
     },
   });
 
-  console.log('✅ Deities created');
-
-  // ============== DARSHAN SCHEDULES ==============
-  console.log('🕐 Creating darshan schedules...');
-  const darshanSchedules = [];
-
-  // Daily darshans
+  // Darshan Schedules
+  const today = new Date();
   for (let day = 0; day < 7; day++) {
-    const schedule = await prisma.darshanSchedule.create({
+    const schedule = await client.darshanSchedule.create({
       data: {
         templeId: temple.id,
-        name: day === 0 || day === 6 ? 'Weekend General Darshan' : 'General Darshan',
-        description: 'General darshan for all devotees',
+        name: day === 0 || day === 6 ? "Weekend General Darshan" : "General Darshan",
+        description: "General darshan for all devotees",
         dayOfWeek: day,
-        startTime: '06:00',
-        endTime: '20:00',
+        startTime: "06:00 AM",
+        endTime: "09:00 PM",
         maxCapacity: 500,
-        isSpecial: false,
         isActive: true,
-        displayOrder: 1,
       },
     });
-    darshanSchedules.push(schedule);
-  }
 
-  // Special darshans
-  const specialDarshan = await prisma.darshanSchedule.create({
-    data: {
-      templeId: temple.id,
-      name: 'VIP Darshan',
-      description: 'Special darshan with reduced wait time',
-      dayOfWeek: null, // Every day
-      startTime: '05:00',
-      endTime: '22:00',
-      maxCapacity: 50,
-      isSpecial: true,
-      isActive: true,
-      displayOrder: 0,
-    },
-  });
-  darshanSchedules.push(specialDarshan);
-
-  console.log('✅ Darshan schedules created');
-
-  // Generate darshan slots for next 30 days
-  console.log('📅 Generating darshan slots...');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
     const slotDate = new Date(today);
-    slotDate.setDate(slotDate.getDate() + dayOffset);
-    const dayOfWeek = slotDate.getDay();
-
-    for (const schedule of darshanSchedules) {
-      if (schedule.dayOfWeek !== null && schedule.dayOfWeek !== dayOfWeek) continue;
-
-      const [startHour, startMin] = schedule.startTime.split(':').map(Number);
-      const [endHour, endMin] = schedule.endTime.split(':').map(Number);
-      const totalMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
-      const slotDuration = 60; // 1 hour slots
-      const numSlots = Math.floor(totalMinutes / slotDuration);
-
-      for (let i = 0; i < numSlots; i++) {
-        const slotStart = new Date(slotDate);
-        slotStart.setHours(startHour + Math.floor((startMin + i * slotDuration) / 60));
-        slotStart.setMinutes((startMin + i * slotDuration) % 60);
-
-        const slotEnd = new Date(slotStart);
-        slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
-
-        await prisma.darshanSlot.create({
-          data: {
-            scheduleId: schedule.id,
-            date: slotDate,
-            startTime: slotStart,
-            endTime: slotEnd,
-            capacity: schedule.maxCapacity,
-            bookedCount: 0,
-            status: SlotStatus.ACTIVE,
-          },
-        });
-      }
-    }
+    slotDate.setDate(slotDate.getDate() + day);
+    await client.darshanSlot.create({
+      data: {
+        scheduleId: schedule.id,
+        date: slotDate,
+        startTime: new Date(slotDate.setHours(6, 0, 0, 0)),
+        endTime: new Date(slotDate.setHours(7, 0, 0, 0)),
+        capacity: 500,
+        bookedCount: 0,
+        status: SlotStatus.ACTIVE,
+      },
+    });
   }
 
-  console.log('✅ Darshan slots generated for 30 days');
-
-  // ============== AARTI SCHEDULES ==============
-  console.log('🕯️ Creating aarti schedules...');
-  const aartiSchedules = [
-    { name: 'Suprabhatam', startTime: '03:00', endTime: '03:30', isSpecial: false, displayOrder: 1 },
-    { name: 'Thomala Seva', startTime: '03:30', endTime: '04:00', isSpecial: false, displayOrder: 2 },
-    { name: 'Archana', startTime: '04:00', endTime: '04:30', isSpecial: false, displayOrder: 3 },
-    { name: 'Sahasranama', startTime: '04:30', endTime: '05:00', isSpecial: false, displayOrder: 4 },
-    { name: 'Ekantha Seva', startTime: '22:00', endTime: '22:30', isSpecial: false, displayOrder: 5 },
+  // Aarti Schedules
+  const aartis = [
+    { name: "Suprabhatam", startTime: "03:00 AM", endTime: "04:00 AM", desc: "Awakening of the Lord" },
+    { name: "Thomala Seva", startTime: "04:30 AM", endTime: "05:30 AM", desc: "Flower decoration" },
+    { name: "Archana", startTime: "06:00 AM", endTime: "07:00 AM", desc: "Chanting of 1000 names" },
+    { name: "Naivedyam", startTime: "12:00 PM", endTime: "12:30 PM", desc: "Food offering" },
+    { name: "Sandhya Aarti", startTime: "06:30 PM", endTime: "07:30 PM", desc: "Evening lamp offering" },
+    { name: "Ekanta Seva", startTime: "10:30 PM", endTime: "11:00 PM", desc: "Putting the Lord to rest" },
   ];
 
-  for (const aarti of aartiSchedules) {
-    await prisma.aartiSchedule.create({
+  for (let i = 0; i < aartis.length; i++) {
+    await client.aartiSchedule.create({
       data: {
         templeId: temple.id,
-        name: aarti.name,
-        description: `Daily ${aarti.name}`,
-        dayOfWeek: null,
-        startTime: aarti.startTime,
-        endTime: aarti.endTime,
-        isSpecial: aarti.isSpecial,
+        name: aartis[i].name,
+        description: aartis[i].desc,
+        startTime: aartis[i].startTime,
+        endTime: aartis[i].endTime,
+        displayOrder: i + 1,
         status: AartiStatus.ACTIVE,
-        displayOrder: aarti.displayOrder,
       },
     });
   }
 
-  console.log('✅ Aarti schedules created');
-
-  // ============== PUJAS ==============
-  console.log('🙏 Creating pujas...');
+  // Pujas
   const pujas = [
-    { name: 'Sahasranama Archana', pricePaise: 25000, durationMinutes: 30, defaultCapacity: 1, displayOrder: 1 },
-    { name: 'Lakshmi Kubera Puja', pricePaise: 50000, durationMinutes: 45, defaultCapacity: 2, displayOrder: 2 },
-    { name: 'Navagraha Shanti', pricePaise: 75000, durationMinutes: 60, defaultCapacity: 4, displayOrder: 3 },
-    { name: 'Vahana Puja', pricePaise: 10000, durationMinutes: 15, defaultCapacity: 1, displayOrder: 4 },
+    { name: "Kalyanotsavam", price: 50000, duration: 120, capacity: 50 },
+    { name: "Sahasra Deepalankara Seva", price: 25000, duration: 60, capacity: 100 },
+    { name: "Vasantotsavam", price: 15000, duration: 45, capacity: 200 },
+    { name: "Arjitha Brahmotsavam", price: 10000, duration: 90, capacity: 75 },
+    { name: "Unjal Seva", price: 5000, duration: 30, capacity: 150 },
   ];
 
   for (const puja of pujas) {
-    const created = await prisma.puja.create({
+    const createdPuja = await client.puja.create({
       data: {
         templeId: temple.id,
         deityId: mainDeity.id,
         name: puja.name,
-        description: `Traditional ${puja.name}`,
-        pricePaise: puja.pricePaise,
-        durationMinutes: puja.durationMinutes,
-        defaultCapacity: puja.defaultCapacity,
+        description: `Sacred ${puja.name} offering to Lord Venkateswara`,
+        pricePaise: puja.price,
+        durationMinutes: puja.duration,
+        defaultCapacity: puja.capacity,
         isActive: true,
-        displayOrder: puja.displayOrder,
       },
     });
 
-    // Generate slots for next 14 days
-    for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+    for (let i = 0; i < 7; i++) {
       const slotDate = new Date(today);
-      slotDate.setDate(slotDate.getDate() + dayOffset);
-
-      // Morning slots
-      for (let hour = 6; hour < 12; hour += 2) {
-        const slotStart = new Date(slotDate);
-        slotStart.setHours(hour, 0, 0, 0);
-        const slotEnd = new Date(slotStart);
-        slotEnd.setHours(slotEnd.getHours() + 1);
-
-        await prisma.pujaSlot.create({
-          data: {
-            pujaId: created.id,
-            date: slotDate,
-            startTime: slotStart,
-            endTime: slotEnd,
-            capacity: puja.defaultCapacity,
-            bookedCount: 0,
-            status: SlotStatus.ACTIVE,
-          },
-        });
-      }
-    }
-  }
-
-  console.log('✅ Pujas and slots created');
-
-  // ============== SEVAS ==============
-  console.log('🪔 Creating sevas...');
-  const sevas = [
-    { name: 'Abhishekam', pricePaise: 15000, durationMinutes: 30, defaultCapacity: 2, displayOrder: 1 },
-    { name: 'Alankaram', pricePaise: 20000, durationMinutes: 30, defaultCapacity: 2, displayOrder: 2 },
-    { name: 'Nitya Kalyanam', pricePaise: 100000, durationMinutes: 60, defaultCapacity: 5, displayOrder: 3 },
-    { name: 'Annadanam Sponsorship', pricePaise: 50000, durationMinutes: 120, defaultCapacity: 1, displayOrder: 4 },
-  ];
-
-  for (const seva of sevas) {
-    const created = await prisma.seva.create({
-      data: {
-        templeId: temple.id,
-        deityId: mainDeity.id,
-        name: seva.name,
-        description: `Sacred ${seva.name} service`,
-        pricePaise: seva.pricePaise,
-        durationMinutes: seva.durationMinutes,
-        defaultCapacity: seva.defaultCapacity,
-        isActive: true,
-        displayOrder: seva.displayOrder,
-      },
-    });
-
-    // Generate slots for next 14 days
-    for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
-      const slotDate = new Date(today);
-      slotDate.setDate(slotDate.getDate() + dayOffset);
-
-      // Morning and evening slots
-      for (const hour of [7, 10, 16, 19]) {
-        const slotStart = new Date(slotDate);
-        slotStart.setHours(hour, 0, 0, 0);
-        const slotEnd = new Date(slotStart);
-        slotEnd.setHours(slotEnd.getHours() + (seva.durationMinutes / 60));
-
-        await prisma.sevaSlot.create({
-          data: {
-            sevaId: created.id,
-            date: slotDate,
-            startTime: slotStart,
-            endTime: slotEnd,
-            capacity: seva.defaultCapacity,
-            bookedCount: 0,
-            status: SlotStatus.ACTIVE,
-          },
-        });
-      }
-    }
-  }
-
-  console.log('✅ Sevas and slots created');
-
-  // ============== ROOMS ==============
-  console.log('🏨 Creating rooms...');
-  const roomTypes = [
-    { type: 'DELUXE', count: 10, pricePaise: 500000, capacity: 4, floor: 1 },
-    { type: 'PREMIUM', count: 20, pricePaise: 300000, capacity: 3, floor: 2 },
-    { type: 'STANDARD', count: 30, pricePaise: 150000, capacity: 2, floor: 3 },
-    { type: 'DORMITORY', count: 5, pricePaise: 50000, capacity: 8, floor: 4 },
-  ];
-
-  for (const rt of roomTypes) {
-    for (let i = 1; i <= rt.count; i++) {
-      await prisma.room.create({
+      slotDate.setDate(slotDate.getDate() + i);
+      await client.pujaSlot.create({
         data: {
-          templeId: temple.id,
-          roomNumber: `${rt.type.substring(0, 2).toUpperCase()}-${rt.floor}${String(i).padStart(2, '0')}`,
-          type: rt.type,
-          capacity: rt.capacity,
-          pricePaise: rt.pricePaise,
-          status: RoomStatus.AVAILABLE,
-          amenities: ['AC', 'WiFi', 'Hot Water', 'Attached Bathroom'],
-          description: `${rt.type} room with modern amenities`,
-          floor: rt.floor,
+          pujaId: createdPuja.id,
+          date: slotDate,
+          startTime: new Date(slotDate.setHours(9, 0, 0, 0)),
+          endTime: new Date(slotDate.setHours(11, 0, 0, 0)),
+          capacity: puja.capacity,
+          bookedCount: 0,
+          status: SlotStatus.ACTIVE,
         },
       });
     }
   }
 
-  console.log('✅ Rooms created');
-
-  // ============== DONATION CAUSES ==============
-  console.log('💝 Creating donation causes...');
-  const causes = [
-    { name: 'Annadanam', slug: 'annadanam', description: 'Free food for devotees', isDefault: true, displayOrder: 1 },
-    { name: 'Temple Renovation', slug: 'renovation', description: 'Temple infrastructure development', isDefault: false, displayOrder: 2 },
-    { name: 'Education Fund', slug: 'education', description: 'Support Vedic education', isDefault: false, displayOrder: 3 },
-    { name: 'Medical Aid', slug: 'medical', description: 'Healthcare for poor devotees', isDefault: false, displayOrder: 4 },
-    { name: 'Goshala', slug: 'goshala', description: 'Cow protection and care', isDefault: false, displayOrder: 5 },
+  // Sevas
+  const sevas = [
+    { name: "Suprabhata Seva", price: 12000, duration: 30, capacity: 100 },
+    { name: "Thomala Seva", price: 28000, duration: 45, capacity: 50 },
+    { name: "Archana Seva", price: 22000, duration: 30, capacity: 75 },
+    { name: "Visesha Pooja", price: 60000, duration: 90, capacity: 30 },
   ];
 
-  for (const cause of causes) {
-    await prisma.donationCause.create({
+  for (const seva of sevas) {
+    const createdSeva = await client.seva.create({
       data: {
         templeId: temple.id,
-        name: cause.name,
-        slug: cause.slug,
-        description: cause.description,
-        isDefault: cause.isDefault,
+        deityId: mainDeity.id,
+        name: seva.name,
+        description: `Devotional ${seva.name} ritual`,
+        pricePaise: seva.price,
+        durationMinutes: seva.duration,
+        defaultCapacity: seva.capacity,
         isActive: true,
-        displayOrder: cause.displayOrder,
       },
     });
+
+    for (let i = 0; i < 7; i++) {
+      const slotDate = new Date(today);
+      slotDate.setDate(slotDate.getDate() + i);
+      await client.sevaSlot.create({
+        data: {
+          sevaId: createdSeva.id,
+          date: slotDate,
+          startTime: new Date(slotDate.setHours(5, 0, 0, 0)),
+          endTime: new Date(slotDate.setHours(5, 30, 0, 0)),
+          capacity: seva.capacity,
+          bookedCount: 0,
+          status: SlotStatus.ACTIVE,
+        },
+      });
+    }
   }
 
-  console.log('✅ Donation causes created');
+  // Accommodation Rooms
+  const roomTypes = [
+    { type: "STANDARD", name: "Standard Non-AC Room", price: 50000, capacity: 2, count: 10 },
+    { type: "DELUXE", name: "Deluxe AC Room", price: 100000, capacity: 3, count: 8 },
+    { type: "SUITE", name: "VIP Suite", price: 250000, capacity: 4, count: 4 },
+    { type: "DORMITORY", name: "Devotee Dormitory", price: 15000, capacity: 1, count: 20 },
+  ];
 
-  // ============== PRASAD PRODUCTS ==============
-  console.log('🍯 Creating prasad products...');
+  for (const rt of roomTypes) {
+    for (let i = 1; i <= rt.count; i++) {
+      await client.room.create({
+        data: {
+          templeId: temple.id,
+          roomNumber: `${rt.type.slice(0, 3)}${i.toString().padStart(3, "0")}`,
+          type: rt.type,
+          pricePaise: rt.price,
+          capacity: rt.capacity,
+          amenities: rt.type === "SUITE" ? ["AC", "TV", "Geyser", "WiFi", "Room Service"] : ["Fan", "Attached Bath"],
+          status: RoomStatus.AVAILABLE,
+        },
+      });
+    }
+  }
+
+  // Prasad Catalog
   const prasadProducts = [
-    { name: 'Laddu Prasadam', pricePaise: 5000, stock: 1000, displayOrder: 1 },
-    { name: 'Vada Prasadam', pricePaise: 3000, stock: 500, displayOrder: 2 },
-    { name: 'Pulihora', pricePaise: 4000, stock: 300, displayOrder: 3 },
-    { name: 'Coconut Burfi', pricePaise: 6000, stock: 200, displayOrder: 4 },
-    { name: 'Rava Kesari', pricePaise: 3500, stock: 400, displayOrder: 5 },
+    { name: "Tirupati Laddu (Large)", desc: "World-famous GI-tagged Tirupati Laddu", price: 5000, stock: 1000 },
+    { name: "Tirupati Laddu (Special)", desc: "Special Kalyanotsavam Laddu", price: 20000, stock: 200 },
+    { name: "Vada Prasad", desc: "Traditional spiced black gram vada", price: 2500, stock: 500 },
+    { name: "Chakkarapongal (Sweet Rice)", desc: "Sweet jaggery and rice prasad with ghee", price: 4000, stock: 300 },
   ];
 
-  for (const product of prasadProducts) {
-    await prisma.prasadProduct.create({
+  for (const p of prasadProducts) {
+    await client.prasadProduct.create({
       data: {
         templeId: temple.id,
-        name: product.name,
-        description: `Delicious ${product.name}`,
-        pricePaise: product.pricePaise,
-        stock: product.stock,
-        reservedStock: 0,
+        name: p.name,
+        description: p.desc,
+        pricePaise: p.price,
+        stock: p.stock,
         isActive: true,
-        displayOrder: product.displayOrder,
       },
     });
   }
 
-  console.log('✅ Prasad products created');
-
-  // ============== EVENTS ==============
-  console.log('🎉 Creating events...');
-  const events = [
-    {
-      title: 'Brahmotsavam Festival',
-      description: 'Annual 9-day grand festival with processions',
-      imageUrl: 'https://example.com/brahmotsavam.jpg',
-      location: 'Temple Complex',
-      startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000),
-      capacity: 10000,
-      registrationRequired: true,
-      status: EventStatus.PUBLISHED,
-    },
-    {
-      title: 'Vaikunta Ekadasi',
-      description: 'Most auspicious day for Vishnu devotees',
-      imageUrl: 'https://example.com/vaikunta.jpg',
-      location: 'Main Temple',
-      startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      capacity: 5000,
-      registrationRequired: true,
-      status: EventStatus.PUBLISHED,
-    },
-    {
-      title: 'Rath Yatra',
-      description: 'Chariot procession of the deities',
-      imageUrl: 'https://example.com/rath.jpg',
-      location: 'Temple Streets',
-      startDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-      capacity: 15000,
-      registrationRequired: false,
-      status: EventStatus.PUBLISHED,
-    },
+  // Donation Causes
+  const causes = [
+    { name: "Nitya Annadanam", slug: "nitya-annadanam", desc: "Free food distribution for devotees" },
+    { name: "Goshala Maintenance", slug: "goshala-maintenance", desc: "Protection and care of sacred cows" },
+    { name: "Temple Renovation & Heritage", slug: "temple-renovation", desc: "Preservation of ancient Mandir architecture" },
+    { name: "Veda Patashala & Sanskrit", slug: "veda-patashala", desc: "Support Vedic education and student boarding" },
   ];
 
-  for (const event of events) {
-    await prisma.event.create({
+  for (const c of causes) {
+    await client.donationCause.create({
       data: {
         templeId: temple.id,
-        title: event.title,
-        description: event.description,
-        imageUrl: event.imageUrl,
-        location: event.location,
-        startDate: event.startDate,
-        endDate: event.endDate,
-        capacity: event.capacity,
-        bookedCount: 0,
-        registrationRequired: event.registrationRequired,
-        status: event.status,
+        name: c.name,
+        slug: c.slug,
+        description: c.desc,
+        isActive: true,
       },
     });
   }
 
-  console.log('✅ Events created');
-
-  // ============== ANNOUNCEMENTS ==============
-  console.log('📢 Creating announcements...');
-  await prisma.announcement.create({
+  // Gurukul
+  await client.gurukul.create({
     data: {
       templeId: temple.id,
-      title: 'Temple Timings Updated',
-      message: 'New darshan timings effective from next month. Please check website for details.',
-      priority: AnnouncementPriority.IMPORTANT,
-      status: AnnouncementStatus.PUBLISHED,
-      startsAt: new Date(),
-      endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      name: "Shree Neelkantheshwar Mahadev Ved Vedang Gurukulam",
+      description: "Traditional Vedic Gurukul & Sant Ashram",
+      about: "Vedic Gurukul dedicated to the preservation and teaching of Shukla Yajurveda, Vedang, and Sanskrit Shastras.",
+      philosophy: "Sanatan Vedic Gurukul Parampara cultivating character, Dharma, and Shastric mastery.",
+      admissionInfo: "Pravesh open for eligible students aged 8-14 years.",
+      contactInfo: "gurukul@temple.org | +91 99999 99999",
+      rules: "Strict adherence to daily Dincharya routine, Brahmacharya, Ahimsa, and traditional Vedic lifestyle.",
+      isPublished: true,
+      schedules: {
+        create: [
+          { activityName: "Pratah Smaran", description: "Morning awakening, Snan & Vedic Chanting", startTime: "04:00 AM", endTime: "05:30 AM", displayOrder: 1, isActive: true },
+          { activityName: "First Class", description: "Veda Paath, Sandhya Vandanam & Sanskrit Grammar", startTime: "08:00 AM", endTime: "11:00 AM", displayOrder: 2, isActive: true },
+          { activityName: "Second Class", description: "Shastra Adhyayan, Jyotish, Upanishads", startTime: "02:00 PM", endTime: "04:00 PM", displayOrder: 3, isActive: true },
+          { activityName: "Sandhya Aarti", description: "Maha Aarti, Stotra Paath & Satsang", startTime: "06:00 PM", endTime: "07:30 PM", displayOrder: 4, isActive: true },
+        ],
+      },
     },
   });
 
-  await prisma.announcement.create({
+  // Paath
+  await client.paath.create({
     data: {
       templeId: temple.id,
-      title: 'Special Puja on Full Moon',
-      message: 'Special Lakshmi Puja will be performed on full moon day. Registration opens next week.',
-      priority: AnnouncementPriority.NORMAL,
-      status: AnnouncementStatus.PUBLISHED,
-      startsAt: new Date(),
-      endsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      title: "Shiva Tandava Stotram",
+      sanskritText: "जटाटवीगलज्जलप्रवाहपावितस्थले गलेऽवलम्ब्य लम्बितां भुजङ्गतुङ्गमालिकाम्। डमड्डमड्डमड्डमन्निनादवड्डमर्वयं चकार चण्डताण्डवं तनोतु नः शिवः शिवम्॥",
+      transliteration: "Jatatavigalajjala pravahapavitasthale Galeavalambya lambitam bhujangatungamalikam | Damad damad damad daman ninadavadamarvayam Chakara chandatandavam tanotu nah shivah shivam ||",
+      hindiMeaning: "जिन शिव जी के सघन जटा रूपी वन से बहती हुई गंगा नदी की धाराएं उनके पवित्र कंठ को प्रक्षालित करती हैं, वे भगवान शिव हमारा कल्याण करें।",
+      englishMeaning: "May Lord Shiva, whose neck is purified by the flow of water cascading from the forest of his matted hair, bless us with auspiciousness.",
+      audioUrl: "https://assets.temple.org/audio/shiva_tandava.mp3",
+      durationSeconds: 360,
+      category: "Stotram",
+      displayOrder: 1,
+      isPublished: true,
     },
   });
 
-  console.log('✅ Announcements created');
-
-  // ============== ADDRESSES ==============
-  console.log('📍 Creating addresses...');
-  await prisma.address.create({
-    data: {
-      userId: devotee1.id,
-      line1: '123 Temple Street',
-      line2: 'Near Bus Stand',
-      city: 'Chennai',
-      state: 'Tamil Nadu',
-      pincode: '600001',
-      country: 'India',
-      phone: '+919876543210',
-      isDefault: true,
-    },
-  });
-
-  await prisma.address.create({
-    data: {
-      userId: devotee2.id,
-      line1: '456 Devotee Lane',
-      city: 'Bangalore',
-      state: 'Karnataka',
-      pincode: '560001',
-      country: 'India',
-      phone: '+919876543211',
-      isDefault: true,
-    },
-  });
-
-  console.log('✅ Addresses created');
-
-  // ============== CROWD SNAPSHOTS ==============
-  console.log('👥 Creating crowd snapshots...');
+  // Mahaprasad Dining Slots
   for (let i = 0; i < 7; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const level = i % 3 === 0 ? CrowdLevel.HIGH : i % 3 === 1 ? CrowdLevel.MODERATE : CrowdLevel.LOW;
-    const occupancy = level === CrowdLevel.HIGH ? 85 : level === CrowdLevel.MODERATE ? 55 : 25;
+    const slotDate = new Date(today);
+    slotDate.setDate(slotDate.getDate() + i);
 
-    await prisma.crowdSnapshot.create({
-      data: {
-        templeId: temple.id,
-        date,
-        level,
-        occupancyPct: occupancy,
-        estimatedCount: Math.floor(occupancy * 100),
-        availableCapacity: Math.floor((100 - occupancy) * 100),
-        source: 'computed',
-      },
+    await client.mahaprasadSlot.createMany({
+      data: [
+        {
+          templeId: temple.id,
+          sessionName: "Madhyahna Mahaprasad (Lunch)",
+          date: slotDate,
+          startTime: "12:00 PM",
+          endTime: "02:30 PM",
+          capacity: 150,
+          bookedCount: 0,
+          pricePerPersonPaise: 0,
+          isActive: true,
+        },
+        {
+          templeId: temple.id,
+          sessionName: "Sandhya Mahaprasad (Dinner)",
+          date: slotDate,
+          startTime: "07:30 PM",
+          endTime: "09:30 PM",
+          capacity: 120,
+          bookedCount: 0,
+          pricePerPersonPaise: 0,
+          isActive: true,
+        },
+      ],
     });
   }
 
-  console.log('✅ Crowd snapshots created');
-
-  // ============== AUDIT LOGS ==============
-  console.log('📋 Creating audit logs...');
-  await prisma.auditLog.createMany({
-    data: [
-      { action: 'CREATE', entity: 'Temple', entityId: temple.id, metadata: { name: temple.name }, ipAddress: '127.0.0.1' },
-      { action: 'CREATE', entity: 'User', entityId: superAdmin.id, metadata: { role: 'SUPER_ADMIN' }, ipAddress: '127.0.0.1' },
-      { action: 'CREATE', entity: 'User', entityId: admin.id, metadata: { role: 'ADMIN' }, ipAddress: '127.0.0.1' },
-      { action: 'LOGIN', entity: 'User', entityId: superAdmin.id, ipAddress: '127.0.0.1' },
-    ],
+  // Jigyasa Samadhan
+  await client.jigyasa.create({
+    data: {
+      askerName: "Amit Verma",
+      question: "What is the spiritual significance of lighting a Pancha Pradeep or Ghee Diya in the temple?",
+      category: "Rituals & Traditions",
+      answer: "Lighting a Ghee Diya represents the removal of the darkness of Tamas with the radiant light of Sattva.",
+      answeredBy: "Acharya Vidyadhar",
+      answeredAt: new Date(),
+      status: "ANSWERED",
+      isPublic: true,
+    },
   });
 
-  console.log('✅ Audit logs created');
-
-  console.log('🎉 Seed completed successfully!');
-  console.log('\n📋 Summary:');
-  console.log(`   Temple: ${temple.name}`);
-  console.log(`   Users: ${[superAdmin, admin, manager, staff, devotee1, devotee2].length}`);
-  console.log(`   Deities: 2`);
-  console.log(`   Darshan Schedules: ${darshanSchedules.length}`);
-  console.log(`   Aarti Schedules: ${aartiSchedules.length}`);
-  console.log(`   Pujas: ${pujas.length}`);
-  console.log(`   Sevas: ${sevas.length}`);
-  console.log(`   Rooms: ${roomTypes.reduce((sum, rt) => sum + rt.count, 0)}`);
-  console.log(`   Donation Causes: ${causes.length}`);
-  console.log(`   Prasad Products: ${prasadProducts.length}`);
-  console.log(`   Events: ${events.length}`);
-  console.log(`   Announcements: 2`);
+  console.log("🎉 Development seed completed successfully!");
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Seed failed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// ==============================================================================
+// 3. MAIN ENTRY POINT
+// ==============================================================================
+export async function main() {
+  const isProduction = process.env.NODE_ENV === "production";
+  if (isProduction) {
+    await seedProductionMasterData(prisma);
+  } else {
+    await resetAndSeedDevelopmentData(prisma);
+  }
+}
+
+// Execute if run directly from CLI (npx prisma db seed)
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error("❌ Seed execution failed:", e.message);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

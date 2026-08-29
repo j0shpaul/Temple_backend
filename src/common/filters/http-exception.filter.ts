@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from "@nestjs/common";
 import { Request, Response } from "express";
 import { ApiResponseDto } from "../dto/api-response.dto";
@@ -47,6 +48,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -74,7 +77,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return response.status(status).json(ApiResponseDto.error(code, message));
     }
 
-    console.error("Unhandled exception:", exception);
+    const err = exception as Error;
+    this.logger.error(
+      `Unhandled Exception [${err?.name || "Error"}]: ${err?.message || "Unknown error"}`,
+      err?.stack,
+    );
 
     const errorResponse = ApiResponseDto.error(
       "INTERNAL_SERVER_ERROR",

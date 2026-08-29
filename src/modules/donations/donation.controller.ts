@@ -21,6 +21,7 @@ import {
 import { DonationService } from "./donation.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -40,7 +41,7 @@ export class DonationController {
   }
 
   @Post("causes")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create donation cause (staff+)" })
@@ -53,7 +54,7 @@ export class DonationController {
   }
 
   @Put("causes/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update donation cause (staff+)" })
@@ -66,7 +67,7 @@ export class DonationController {
   }
 
   @Delete("causes/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN")
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -84,7 +85,7 @@ export class DonationController {
     @Body() data: any,
     @CurrentUser() user: any,
   ) {
-    return this.donationService.createDonation(user.id, { ...data, templeId });
+    return this.donationService.createDonation(user.id, { ...data, templeId }, user.role);
   }
 
   @Post("verify")
@@ -126,7 +127,7 @@ export class DonationController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get temple donations (staff+)" })

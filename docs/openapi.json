@@ -1,0 +1,7880 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "HealthController_health",
+        "summary": "System health check (App, DB & Redis)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/health/live": {
+      "get": {
+        "operationId": "HealthController_liveness",
+        "summary": "Application liveness probe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "operationId": "HealthController_readiness",
+        "summary": "Database and Redis readiness probe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/auth/send-otp": {
+      "post": {
+        "operationId": "AuthController_sendOtp",
+        "summary": "Send OTP to phone number",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/verify-otp": {
+      "post": {
+        "operationId": "AuthController_verifyOtp",
+        "summary": "Verify OTP and get access/refresh tokens",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "summary": "Refresh access token using refresh token",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "summary": "Logout and invalidate refresh token",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/profile": {
+      "get": {
+        "operationId": "AuthController_getProfile",
+        "summary": "Get current user profile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "AuthController_updateProfile",
+        "summary": "Update user profile",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/complete-profile": {
+      "post": {
+        "operationId": "AuthController_completeProfile",
+        "summary": "Complete user registration profile details",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "operationId": "UsersController_findAll",
+        "summary": "List all users (admin/staff)",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/profile": {
+      "get": {
+        "operationId": "UsersController_getProfile",
+        "summary": "Get current user profile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "operationId": "UsersController_getMe",
+        "summary": "Get current user profile (alias)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/location": {
+      "put": {
+        "operationId": "UsersController_updateLocation",
+        "summary": "Update current user location coordinates",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLocationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findById",
+        "summary": "Get user by ID (admin/staff)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/role": {
+      "put": {
+        "operationId": "UsersController_updateRole",
+        "summary": "Update user role (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/status": {
+      "put": {
+        "operationId": "UsersController_updateStatus",
+        "summary": "Update user status (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/addresses": {
+      "post": {
+        "operationId": "UsersController_addAddress",
+        "summary": "Add address for current user",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/addresses/{addressId}": {
+      "put": {
+        "operationId": "UsersController_updateAddress",
+        "summary": "Update address",
+        "parameters": [
+          {
+            "name": "addressId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_deleteAddress",
+        "summary": "Delete address",
+        "parameters": [
+          {
+            "name": "addressId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples": {
+      "get": {
+        "operationId": "TempleController_findAll",
+        "summary": "List all temples",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple"
+        ]
+      },
+      "post": {
+        "operationId": "TempleController_create",
+        "summary": "Create temple (admin only)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{id}": {
+      "get": {
+        "operationId": "TempleController_findById",
+        "summary": "Get temple by ID (public)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple"
+        ]
+      },
+      "put": {
+        "operationId": "TempleController_update",
+        "summary": "Update temple (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "TempleController_delete",
+        "summary": "Delete temple (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/info": {
+      "get": {
+        "operationId": "TempleInfoController_findByTemple",
+        "summary": "Get temple information (public)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple Info"
+        ]
+      },
+      "post": {
+        "operationId": "TempleInfoController_create",
+        "summary": "Create temple info (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple Info"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/info/{id}": {
+      "get": {
+        "operationId": "TempleInfoController_findById",
+        "summary": "Get temple info by ID (public)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple Info"
+        ]
+      },
+      "put": {
+        "operationId": "TempleInfoController_update",
+        "summary": "Update temple info (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple Info"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "TempleInfoController_delete",
+        "summary": "Delete temple info (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Temple Info"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/deities": {
+      "get": {
+        "operationId": "DeityController_findByTemple",
+        "summary": "List deities for a temple (public)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Deity"
+        ]
+      },
+      "post": {
+        "operationId": "DeityController_create",
+        "summary": "Create deity (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Deity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/deities/{id}": {
+      "get": {
+        "operationId": "DeityController_findById",
+        "summary": "Get deity by ID (public)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Deity"
+        ]
+      },
+      "put": {
+        "operationId": "DeityController_update",
+        "summary": "Update deity (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Deity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "DeityController_delete",
+        "summary": "Delete deity (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Deity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/gallery/presigned-url": {
+      "post": {
+        "operationId": "GalleryController_getPresignedUploadUrl",
+        "summary": "Generate pre-signed S3/Cloudinary upload signature/URL (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gallery"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/gallery": {
+      "get": {
+        "operationId": "GalleryController_findByTemple",
+        "summary": "List gallery items for a temple (public)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isPublished",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gallery"
+        ]
+      },
+      "post": {
+        "operationId": "GalleryController_create",
+        "summary": "Create gallery item (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gallery"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/gallery/{id}": {
+      "get": {
+        "operationId": "GalleryController_findById",
+        "summary": "Get gallery item by ID (public)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gallery"
+        ]
+      },
+      "put": {
+        "operationId": "GalleryController_update",
+        "summary": "Update gallery item (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gallery"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "GalleryController_delete",
+        "summary": "Delete gallery item (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gallery"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/darshan/schedules": {
+      "get": {
+        "operationId": "DarshanController_getSchedules",
+        "summary": "List darshan schedules for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ]
+      },
+      "post": {
+        "operationId": "DarshanController_createSchedule",
+        "summary": "Create darshan schedule (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/darshan/schedules/{id}": {
+      "get": {
+        "operationId": "DarshanController_getScheduleById",
+        "summary": "Get darshan schedule by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ]
+      },
+      "put": {
+        "operationId": "DarshanController_updateSchedule",
+        "summary": "Update darshan schedule (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "DarshanController_deleteSchedule",
+        "summary": "Delete darshan schedule (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/darshan/slots": {
+      "get": {
+        "operationId": "DarshanController_getSlots",
+        "summary": "List darshan slots with availability",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/darshan/availability/{date}": {
+      "get": {
+        "operationId": "DarshanController_getAvailability",
+        "summary": "Get darshan availability for a specific date",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/darshan/slots/{id}": {
+      "put": {
+        "operationId": "DarshanController_updateSlot",
+        "summary": "Update darshan slot capacity/status (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Darshan"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/aarti": {
+      "get": {
+        "operationId": "AartiController_findByTemple",
+        "summary": "List aarti schedules for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aarti"
+        ]
+      },
+      "post": {
+        "operationId": "AartiController_create",
+        "summary": "Create aarti schedule (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aarti"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/aarti/today": {
+      "get": {
+        "operationId": "AartiController_getTodaySchedule",
+        "summary": "Get today's aarti schedule",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aarti"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/aarti/upcoming": {
+      "get": {
+        "operationId": "AartiController_getUpcoming",
+        "summary": "Get upcoming aarti schedules",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Days ahead (default 7)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aarti"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/aarti/{id}": {
+      "get": {
+        "operationId": "AartiController_findById",
+        "summary": "Get aarti schedule by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aarti"
+        ]
+      },
+      "put": {
+        "operationId": "AartiController_update",
+        "summary": "Update aarti schedule (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aarti"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AartiController_delete",
+        "summary": "Delete aarti schedule (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aarti"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/puja": {
+      "get": {
+        "operationId": "PujaController_findByTemple",
+        "summary": "List puja services for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ]
+      },
+      "post": {
+        "operationId": "PujaController_create",
+        "summary": "Create puja service (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/puja/availability/{date}": {
+      "get": {
+        "operationId": "PujaController_getAvailability",
+        "summary": "Get puja availability for a specific date",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/puja/slots": {
+      "get": {
+        "operationId": "PujaController_getSlots",
+        "summary": "List puja slots with availability",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pujaId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ]
+      },
+      "post": {
+        "operationId": "PujaController_createSlot",
+        "summary": "Create puja slot (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/puja/{id}": {
+      "get": {
+        "operationId": "PujaController_findById",
+        "summary": "Get puja service by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ]
+      },
+      "put": {
+        "operationId": "PujaController_update",
+        "summary": "Update puja service (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "PujaController_delete",
+        "summary": "Delete puja service (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/puja/slots/{id}": {
+      "put": {
+        "operationId": "PujaController_updateSlot",
+        "summary": "Update puja slot capacity/status (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Puja"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/seva": {
+      "get": {
+        "operationId": "SevaController_findByTemple",
+        "summary": "List seva services for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ]
+      },
+      "post": {
+        "operationId": "SevaController_create",
+        "summary": "Create seva (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/seva/availability/{date}": {
+      "get": {
+        "operationId": "SevaController_getAvailability",
+        "summary": "Get seva availability for a specific date",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/seva/slots": {
+      "get": {
+        "operationId": "SevaController_getSlots",
+        "summary": "List seva slots with availability",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sevaId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ]
+      },
+      "post": {
+        "operationId": "SevaController_createSlot",
+        "summary": "Create seva slot (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/seva/{id}": {
+      "get": {
+        "operationId": "SevaController_findById",
+        "summary": "Get seva by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ]
+      },
+      "put": {
+        "operationId": "SevaController_update",
+        "summary": "Update seva (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SevaController_delete",
+        "summary": "Delete seva (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/seva/slots/{id}": {
+      "put": {
+        "operationId": "SevaController_updateSlot",
+        "summary": "Update seva slot capacity/status (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Seva"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/puja": {
+      "post": {
+        "operationId": "BookingController_createPujaBooking",
+        "summary": "Create puja booking",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/seva": {
+      "post": {
+        "operationId": "BookingController_createSevaBooking",
+        "summary": "Create seva booking",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/darshan": {
+      "post": {
+        "operationId": "BookingController_createDarshanBooking",
+        "summary": "Create darshan booking (free, auto-confirmed)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/me": {
+      "get": {
+        "operationId": "BookingController_getMyBookings",
+        "summary": "Get current user bookings",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/reference/{reference}": {
+      "get": {
+        "operationId": "BookingController_getByReference",
+        "summary": "Get booking by reference (public)",
+        "parameters": [
+          {
+            "name": "reference",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}": {
+      "get": {
+        "operationId": "BookingController_getById",
+        "summary": "Get booking by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/temple/{templeId}": {
+      "get": {
+        "operationId": "BookingController_getTempleBookings",
+        "summary": "Get temple bookings (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bookingType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}/cancel": {
+      "post": {
+        "operationId": "BookingController_cancelBooking",
+        "summary": "Cancel booking",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}/check-in": {
+      "post": {
+        "operationId": "BookingController_checkIn",
+        "summary": "Check in booking (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/verify-qr": {
+      "post": {
+        "operationId": "BookingController_verifyQr",
+        "summary": "Verify QR token (public for scanning)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Booking"
+        ]
+      }
+    },
+    "/api/v1/payments/booking/{bookingId}": {
+      "post": {
+        "operationId": "PaymentController_createBookingPayment",
+        "summary": "Create Cashfree payment order for booking",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/{id}/status": {
+      "get": {
+        "operationId": "PaymentController_getPaymentStatus",
+        "summary": "Reconcile / check authoritative payment status from gateway",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/webhook": {
+      "post": {
+        "operationId": "PaymentController_handleWebhook",
+        "summary": "Cashfree webhook handler (public, signature-verified)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/api/v1/payments/me": {
+      "get": {
+        "operationId": "PaymentController_getMyPayments",
+        "summary": "Get current user payments",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/{id}": {
+      "get": {
+        "operationId": "PaymentController_getById",
+        "summary": "Get payment by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/{id}/refund": {
+      "post": {
+        "operationId": "PaymentController_refund",
+        "summary": "Refund payment (admin/manager only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/donations/causes": {
+      "get": {
+        "operationId": "DonationController_listCauses",
+        "summary": "List donation causes for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ]
+      },
+      "post": {
+        "operationId": "DonationController_createCause",
+        "summary": "Create donation cause (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/donations/causes/{id}": {
+      "put": {
+        "operationId": "DonationController_updateCause",
+        "summary": "Update donation cause (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "DonationController_deleteCause",
+        "summary": "Delete donation cause (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/donations": {
+      "post": {
+        "operationId": "DonationController_create",
+        "summary": "Create donation",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "DonationController_getTempleDonations",
+        "summary": "Get temple donations (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/donations/verify": {
+      "post": {
+        "operationId": "DonationController_verify",
+        "summary": "Verify donation payment",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/donations/me": {
+      "get": {
+        "operationId": "DonationController_getMyDonations",
+        "summary": "Get current user donations",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/donations/{id}": {
+      "get": {
+        "operationId": "DonationController_getById",
+        "summary": "Get donation by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/donations/{id}/receipt": {
+      "get": {
+        "operationId": "DonationController_getReceipt",
+        "summary": "Get donation receipt",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Donations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/products": {
+      "get": {
+        "operationId": "PrasadController_listProducts",
+        "summary": "List prasad products for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ]
+      },
+      "post": {
+        "operationId": "PrasadController_createProduct",
+        "summary": "Create prasad product (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/products/{id}": {
+      "get": {
+        "operationId": "PrasadController_getProduct",
+        "summary": "Get prasad product by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ]
+      },
+      "put": {
+        "operationId": "PrasadController_updateProduct",
+        "summary": "Update prasad product (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "PrasadController_deleteProduct",
+        "summary": "Delete prasad product (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/products/{id}/stock": {
+      "put": {
+        "operationId": "PrasadController_updateStock",
+        "summary": "Update prasad product stock (manager+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/addresses": {
+      "post": {
+        "operationId": "PrasadController_createAddress",
+        "summary": "Create address",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "PrasadController_listAddresses",
+        "summary": "List user addresses",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/orders": {
+      "post": {
+        "operationId": "PrasadController_createOrder",
+        "summary": "Create prasad order (checkout hold)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "PrasadController_getTempleOrders",
+        "summary": "Get temple orders (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/orders/verify": {
+      "post": {
+        "operationId": "PrasadController_verifyPayment",
+        "summary": "Verify order payment",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/orders/me": {
+      "get": {
+        "operationId": "PrasadController_getMyOrders",
+        "summary": "Get current user prasad orders",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/orders/{id}": {
+      "get": {
+        "operationId": "PrasadController_getOrder",
+        "summary": "Get order by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/prasad/orders/{id}/status": {
+      "put": {
+        "operationId": "PrasadController_updateOrderStatus",
+        "summary": "Update order status (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prasad"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/rooms": {
+      "get": {
+        "operationId": "AccommodationController_listRooms",
+        "summary": "List rooms for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ]
+      },
+      "post": {
+        "operationId": "AccommodationController_createRoom",
+        "summary": "Create room (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/rooms/{id}": {
+      "get": {
+        "operationId": "AccommodationController_getRoom",
+        "summary": "Get room by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ]
+      },
+      "put": {
+        "operationId": "AccommodationController_updateRoom",
+        "summary": "Update room (manager+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AccommodationController_deleteRoom",
+        "summary": "Delete room (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/availability": {
+      "get": {
+        "operationId": "AccommodationController_getAvailability",
+        "summary": "Get room availability for date range",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkIn",
+            "required": true,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkOut",
+            "required": true,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/book": {
+      "post": {
+        "operationId": "AccommodationController_createBooking",
+        "summary": "Create accommodation booking (hold room)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/bookings/me": {
+      "get": {
+        "operationId": "AccommodationController_getMyBookings",
+        "summary": "Get current user accommodation bookings",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/bookings/{id}": {
+      "get": {
+        "operationId": "AccommodationController_getBooking",
+        "summary": "Get booking by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/bookings": {
+      "get": {
+        "operationId": "AccommodationController_getTempleBookings",
+        "summary": "Get temple bookings (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/bookings/{id}/check-in": {
+      "post": {
+        "operationId": "AccommodationController_checkIn",
+        "summary": "Check in booking (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/bookings/{id}/check-out": {
+      "post": {
+        "operationId": "AccommodationController_checkOut",
+        "summary": "Check out booking (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/accommodation/bookings/{id}/cancel": {
+      "post": {
+        "operationId": "AccommodationController_cancelBooking",
+        "summary": "Cancel booking",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Accommodation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/events": {
+      "post": {
+        "operationId": "EventsController_create",
+        "summary": "Create event (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "EventsController_list",
+        "summary": "List events for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "upcoming",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/events/{id}": {
+      "get": {
+        "operationId": "EventsController_getById",
+        "summary": "Get event by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ]
+      },
+      "put": {
+        "operationId": "EventsController_update",
+        "summary": "Update event (manager+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "EventsController_delete",
+        "summary": "Delete event (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/events/{id}/register": {
+      "post": {
+        "operationId": "EventsController_register",
+        "summary": "Register for event",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/events/{id}/cancel": {
+      "post": {
+        "operationId": "EventsController_cancelRegistration",
+        "summary": "Cancel event registration",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/events/registrations/me": {
+      "get": {
+        "operationId": "EventsController_getMyRegistrations",
+        "summary": "Get my event registrations",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/events/{id}/registrations": {
+      "get": {
+        "operationId": "EventsController_getEventRegistrations",
+        "summary": "Get event registrations (staff+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/temples/{templeId}/events/qr/verify/{qrToken}": {
+      "get": {
+        "operationId": "EventsController_verifyQr",
+        "summary": "Verify QR token for check-in (staff+)",
+        "parameters": [
+          {
+            "name": "qrToken",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Events"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/me": {
+      "get": {
+        "operationId": "NotificationsController_getMyNotifications",
+        "summary": "Get my notifications",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/me/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_getUnreadCount",
+        "summary": "Get unread notification count",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/me/{id}/read": {
+      "put": {
+        "operationId": "NotificationsController_markAsRead",
+        "summary": "Mark notification as read",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/me/read-all": {
+      "put": {
+        "operationId": "NotificationsController_markAllAsRead",
+        "summary": "Mark all notifications as read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/temples/{templeId}/announcements": {
+      "get": {
+        "operationId": "NotificationsController_listAnnouncements",
+        "summary": "List announcements for a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "priority",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "description": "Filter active announcements",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "post": {
+        "operationId": "NotificationsController_createAnnouncement",
+        "summary": "Create announcement (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/temples/{templeId}/announcements/{id}": {
+      "get": {
+        "operationId": "NotificationsController_getAnnouncement",
+        "summary": "Get announcement by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "put": {
+        "operationId": "NotificationsController_updateAnnouncement",
+        "summary": "Update announcement (manager+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "NotificationsController_deleteAnnouncement",
+        "summary": "Delete announcement (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/temples/{templeId}/announcements/{id}/publish": {
+      "post": {
+        "operationId": "NotificationsController_publishAnnouncement",
+        "summary": "Publish announcement (manager+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/admin/send": {
+      "post": {
+        "operationId": "NotificationsController_adminSendNotification",
+        "summary": "Send notification to user (manager+)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/admin/broadcast": {
+      "post": {
+        "operationId": "NotificationsController_broadcastNotification",
+        "summary": "Broadcast notification to all users (admin only)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qr/verify/{qrToken}": {
+      "get": {
+        "operationId": "QrController_verifyQr",
+        "summary": "Verify QR token (staff+)",
+        "parameters": [
+          {
+            "name": "qrToken",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QR Verification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qr/check-in/booking": {
+      "post": {
+        "operationId": "QrController_checkInBooking",
+        "summary": "Check in booking via QR (staff+)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QR Verification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qr/check-in/event": {
+      "post": {
+        "operationId": "QrController_checkInEvent",
+        "summary": "Check in event registration via QR (staff+)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QR Verification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qr/check-in/accommodation": {
+      "post": {
+        "operationId": "QrController_checkInAccommodation",
+        "summary": "Check in accommodation via QR (staff+)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QR Verification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qr/check-out/accommodation": {
+      "post": {
+        "operationId": "QrController_checkOutAccommodation",
+        "summary": "Check out accommodation via QR (staff+)",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QR Verification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qr/temples/{templeId}/regenerate/booking-qrs": {
+      "post": {
+        "operationId": "QrController_regenerateBookingQrs",
+        "summary": "Regenerate missing booking QR codes (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QR Verification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qr/temples/{templeId}/regenerate/accommodation-qrs": {
+      "post": {
+        "operationId": "QrController_regenerateAccommodationQrs",
+        "summary": "Regenerate missing accommodation QR codes (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QR Verification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "operationId": "AdminController_getAuditLogs",
+        "summary": "Get audit logs (admin+)",
+        "parameters": [
+          {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entity",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "ISO date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "ISO date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/audit-logs/{id}": {
+      "get": {
+        "operationId": "AdminController_getAuditLog",
+        "summary": "Get audit log by ID (admin+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/temples/{templeId}/crowd": {
+      "get": {
+        "operationId": "AdminController_getCrowdStatus",
+        "summary": "Get crowd status for temple (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/temples/{templeId}/crowd/history": {
+      "get": {
+        "operationId": "AdminController_getCrowdHistory",
+        "summary": "Get crowd history for temple (staff+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "ISO date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "ISO date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/temples/{templeId}/crowd/snapshot": {
+      "post": {
+        "operationId": "AdminController_recordCrowdSnapshot",
+        "summary": "Record crowd snapshot (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "operationId": "AdminController_listUsers",
+        "summary": "List users (manager+)",
+        "parameters": [
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isProfileComplete",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}": {
+      "get": {
+        "operationId": "AdminController_getUser",
+        "summary": "Get user by ID (manager+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/role": {
+      "put": {
+        "operationId": "AdminController_updateUserRole",
+        "summary": "Update user role (admin+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/status": {
+      "put": {
+        "operationId": "AdminController_updateUserStatus",
+        "summary": "Update user status (manager+)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/temples/{templeId}/dashboard": {
+      "get": {
+        "operationId": "AdminController_getDashboardStats",
+        "summary": "Get dashboard stats for temple (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/temples/{templeId}/revenue": {
+      "get": {
+        "operationId": "AdminController_getRevenueReport",
+        "summary": "Get revenue report for temple (manager+)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "description": "ISO date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "description": "ISO date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/cleanup-expired-reservations": {
+      "post": {
+        "operationId": "AdminController_cleanupExpiredReservations",
+        "summary": "Release abandoned PENDING_PAYMENT reservations",
+        "parameters": [
+          {
+            "name": "olderThanMinutes",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/temples/{templeId}/staff": {
+      "post": {
+        "operationId": "AdminController_assignStaff",
+        "summary": "Assign staff/manager to a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "AdminController_getTempleStaff",
+        "summary": "List staff assigned to a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/temples/{templeId}/staff/{userId}": {
+      "delete": {
+        "operationId": "AdminController_removeStaff",
+        "summary": "Remove staff/manager from a temple",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{userId}/temples": {
+      "get": {
+        "operationId": "AdminController_getUserTemples",
+        "summary": "List temples assigned to a user",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/home": {
+      "get": {
+        "operationId": "PagesController_getHomePage",
+        "summary": "Home Page Aggregation",
+        "description": "Aggregates hero banner, today's darshan & aarti, featured pujas/sevas, upcoming events, announcements, and featured prasad in a single request.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID (defaults to primary temple)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userLat",
+            "required": false,
+            "in": "query",
+            "description": "User latitude for distance calculation (-90 to 90)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userLng",
+            "required": false,
+            "in": "query",
+            "description": "User longitude for distance calculation (-180 to 180)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Home page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/about": {
+      "get": {
+        "operationId": "PagesController_getAboutPage",
+        "summary": "About Page Aggregation",
+        "description": "Aggregates temple identity, history, architecture, timings, guidelines, enshrined deities, and gallery preview.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "About page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/darshan": {
+      "get": {
+        "operationId": "PagesController_getDarshanPage",
+        "summary": "Darshan Page Aggregation",
+        "description": "Aggregates darshan schedules, real-time slot availability for selected date, today's aarti timings, and darshan rules.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Date in YYYY-MM-DD format (defaults to today)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Darshan page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/puja": {
+      "get": {
+        "operationId": "PagesController_getPujaPage",
+        "summary": "Puja Ceremonies Page Aggregation",
+        "description": "Aggregates active puja ceremonies, deity filter list, descriptions, pricing, duration, and available slots.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deityId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by deity ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Puja page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/seva": {
+      "get": {
+        "operationId": "PagesController_getSevaPage",
+        "summary": "Seva Offerings Page Aggregation",
+        "description": "Aggregates active seva offerings, deity filter list, pricing, and available booking slots.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deityId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by deity ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seva page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "operationId": "PagesController_getEventsPage",
+        "summary": "Events Page Aggregation",
+        "description": "Aggregates paginated upcoming and active festivals, registration availability, and event spots.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (default 1)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page limit (default 10)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "upcoming",
+            "required": false,
+            "in": "query",
+            "description": "Filter upcoming only (default true)",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Events page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/prasad": {
+      "get": {
+        "operationId": "PagesController_getPrasadPage",
+        "summary": "Prasad Catalog Page Aggregation",
+        "description": "Aggregates available prasad products with public stock indicator, prices, images, and pagination.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (default 1)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page limit (default 20)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prasad catalog aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/accommodation": {
+      "get": {
+        "operationId": "PagesController_getAccommodationPage",
+        "summary": "Accommodation Page Aggregation",
+        "description": "Aggregates room types, pricing, amenities, house rules, and real-time room availability for check-in/out range.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkIn",
+            "required": false,
+            "in": "query",
+            "description": "Check-in date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkOut",
+            "required": false,
+            "in": "query",
+            "description": "Check-out date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "capacity",
+            "required": false,
+            "in": "query",
+            "description": "Minimum room capacity",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accommodation page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/donations": {
+      "get": {
+        "operationId": "PagesController_getDonationsPage",
+        "summary": "Donations Page Aggregation",
+        "description": "Aggregates active donation causes, 80G tax exemption guidelines, and suggested donation amounts.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Donations page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/temple-overview": {
+      "get": {
+        "operationId": "PagesController_getTempleOverview",
+        "summary": "Temple Overview Aggregation",
+        "description": "Comprehensive temple identity snapshot with timings, contact, location coordinates, deities, and photo gallery.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "description": "Temple ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userLat",
+            "required": false,
+            "in": "query",
+            "description": "User latitude for distance calculation (-90 to 90)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userLng",
+            "required": false,
+            "in": "query",
+            "description": "User longitude for distance calculation (-180 to 180)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Temple overview aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/gurukul": {
+      "get": {
+        "operationId": "GurukulController_getGurukul",
+        "summary": "Get Gurukul identity, overview and daily schedule (public)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul"
+        ]
+      }
+    },
+    "/api/v1/paath": {
+      "get": {
+        "operationId": "PaathController_findAll",
+        "summary": "List published Nitya Paath & Shlokas (public)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Paath"
+        ]
+      }
+    },
+    "/api/v1/maha-prasad": {
+      "get": {
+        "operationId": "PagesController_getMahaPrasadPage",
+        "summary": "Mahaprasad Dining Page Aggregation",
+        "description": "Aggregates upcoming Mahaprasad dining sessions, timings, pricing, and live seat capacity for bookings.",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mahaprasad page aggregated dataset"
+          }
+        },
+        "tags": [
+          "Pages"
+        ]
+      }
+    },
+    "/api/v1/paath/{id}": {
+      "get": {
+        "operationId": "PaathController_findById",
+        "summary": "Get single published Paath by ID (public)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Paath"
+        ]
+      }
+    },
+    "/api/v1/admin/paath": {
+      "get": {
+        "operationId": "AdminPaathController_adminFindAll",
+        "summary": "List all Paath items including drafts (admin)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isPublished",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Paath Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "AdminPaathController_create",
+        "summary": "Create new Paath / Shloka content (admin)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaathDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Paath Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/paath/{id}": {
+      "put": {
+        "operationId": "AdminPaathController_update",
+        "summary": "Update Paath content (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaathDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Paath Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AdminPaathController_delete",
+        "summary": "Delete Paath content (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Paath Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/paath/{id}/publish": {
+      "put": {
+        "operationId": "AdminPaathController_setPublishStatus",
+        "summary": "Publish or unpublish Paath content (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Paath Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/gurukul/dincharya": {
+      "get": {
+        "operationId": "GurukulController_getDincharya",
+        "summary": "Get Gurukul Dincharya (daily routine schedule) (public)",
+        "parameters": [
+          {
+            "name": "gurukulId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul"
+        ]
+      }
+    },
+    "/api/v1/gurukul/admissions": {
+      "post": {
+        "operationId": "GurukulController_createAdmission",
+        "summary": "Submit Gurukul admission / Pravesh application (public)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdmissionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul"
+        ]
+      }
+    },
+    "/api/v1/admin/gurukul": {
+      "get": {
+        "operationId": "AdminGurukulController_adminGetGurukul",
+        "summary": "Get Gurukul details with schedules & counts (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/gurukul/{id}": {
+      "put": {
+        "operationId": "AdminGurukulController_adminUpdateGurukul",
+        "summary": "Update Gurukul overview and guidelines (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGurukulDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/gurukul/admissions": {
+      "get": {
+        "operationId": "AdminGurukulController_adminGetAdmissions",
+        "summary": "List admission applications with filters (admin)",
+        "parameters": [
+          {
+            "name": "gurukulId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/gurukul/admissions/{id}": {
+      "get": {
+        "operationId": "AdminGurukulController_adminGetAdmissionById",
+        "summary": "Get single admission application details (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "AdminGurukulController_adminUpdateAdmission",
+        "summary": "Review and update admission status & notes (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdmissionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/gurukul/schedule": {
+      "post": {
+        "operationId": "AdminGurukulController_adminCreateSchedule",
+        "summary": "Create new Dincharya schedule entry (admin)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/gurukul/schedule/{id}": {
+      "put": {
+        "operationId": "AdminGurukulController_adminUpdateSchedule",
+        "summary": "Update Dincharya schedule entry (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AdminGurukulController_adminDeleteSchedule",
+        "summary": "Delete Dincharya schedule entry (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Gurukul Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/mahaprasad/slots": {
+      "get": {
+        "operationId": "MahaprasadController_listSlots",
+        "summary": "List available Mahaprasad dining slots (public)",
+        "parameters": [
+          {
+            "name": "templeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad"
+        ]
+      }
+    },
+    "/api/v1/mahaprasad/book": {
+      "post": {
+        "operationId": "MahaprasadController_bookSlot",
+        "summary": "Book Mahaprasad dining token/seats (public)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookMahaprasadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad"
+        ]
+      }
+    },
+    "/api/v1/mahaprasad/booking/{reference}": {
+      "get": {
+        "operationId": "MahaprasadController_getByReference",
+        "summary": "Get Mahaprasad booking by reference (public)",
+        "parameters": [
+          {
+            "name": "reference",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad"
+        ]
+      }
+    },
+    "/api/v1/admin/mahaprasad/slots": {
+      "post": {
+        "operationId": "AdminMahaprasadController_adminCreateSlot",
+        "summary": "Create Mahaprasad dining slot (admin)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMahaprasadSlotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/mahaprasad/slots/{id}": {
+      "put": {
+        "operationId": "AdminMahaprasadController_adminUpdateSlot",
+        "summary": "Update Mahaprasad dining slot (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMahaprasadSlotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/mahaprasad/bookings": {
+      "get": {
+        "operationId": "AdminMahaprasadController_adminGetBookings",
+        "summary": "List Mahaprasad bookings with filters (admin)",
+        "parameters": [
+          {
+            "name": "slotId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/mahaprasad/bookings/{id}/cancel": {
+      "put": {
+        "operationId": "AdminMahaprasadController_adminCancelBooking",
+        "summary": "Cancel Mahaprasad booking & restore capacity (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/mahaprasad/bookings/{id}/checkin": {
+      "put": {
+        "operationId": "AdminMahaprasadController_adminCheckIn",
+        "summary": "Mark Mahaprasad devotee checked-in at dining hall (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Mahaprasad Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/jigyasa": {
+      "get": {
+        "operationId": "JigyasaController_getPublicJigyasa",
+        "summary": "List answered spiritual questions & explanations (public)",
+        "parameters": [
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Samadhan"
+        ]
+      },
+      "post": {
+        "operationId": "JigyasaController_submitQuestion",
+        "summary": "Submit spiritual inquiry / question (public)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskQuestionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Samadhan"
+        ]
+      }
+    },
+    "/api/v1/admin/jigyasa": {
+      "get": {
+        "operationId": "AdminJigyasaController_adminGetQuestions",
+        "summary": "List all questions including pending & drafts (admin)",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isPublic",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/jigyasa/{id}": {
+      "get": {
+        "operationId": "AdminJigyasaController_adminGetQuestionById",
+        "summary": "Get single question details (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AdminJigyasaController_adminDeleteQuestion",
+        "summary": "Delete question (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/jigyasa/{id}/answer": {
+      "put": {
+        "operationId": "AdminJigyasaController_adminAnswerQuestion",
+        "summary": "Provide spiritual answer to question (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerQuestionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/jigyasa/{id}/publish": {
+      "put": {
+        "operationId": "AdminJigyasaController_adminSetPublishStatus",
+        "summary": "Set question public visibility (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/jigyasa/{id}/reject": {
+      "put": {
+        "operationId": "AdminJigyasaController_adminRejectQuestion",
+        "summary": "Reject inappropriate question (admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Jigyasa Admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Temple Digital Platform API",
+    "description": "Comprehensive RESTful Backend API for Temple Digital Platform (Devotee & Admin Panel)",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Pages",
+      "description": "Page-level read aggregations (BFF layer)"
+    },
+    {
+      "name": "Auth",
+      "description": "OTP authentication & JWT token management"
+    },
+    {
+      "name": "Users",
+      "description": "User profile & address management"
+    },
+    {
+      "name": "Temples",
+      "description": "Temple metadata & information"
+    },
+    {
+      "name": "Deities",
+      "description": "Temple deities management"
+    },
+    {
+      "name": "Gallery",
+      "description": "Media & photo gallery"
+    },
+    {
+      "name": "Darshan",
+      "description": "Darshan schedules & real-time slot availability"
+    },
+    {
+      "name": "Aarti",
+      "description": "Daily aarti schedules & timings"
+    },
+    {
+      "name": "Puja",
+      "description": "Puja ceremonies & slot booking"
+    },
+    {
+      "name": "Seva",
+      "description": "Temple seva offerings & reservations"
+    },
+    {
+      "name": "Bookings",
+      "description": "Unified booking engine for Puja, Seva & Darshan"
+    },
+    {
+      "name": "Payments",
+      "description": "Cashfree payment integration & webhooks"
+    },
+    {
+      "name": "Donations",
+      "description": "Causes, online donations & receipts"
+    },
+    {
+      "name": "Prasad",
+      "description": "Prasad catalog, inventory & delivery orders"
+    },
+    {
+      "name": "Accommodation",
+      "description": "Guest house room inventory & booking management"
+    },
+    {
+      "name": "Events",
+      "description": "Temple festivals, events & registrations"
+    },
+    {
+      "name": "Notifications",
+      "description": "User notifications & announcements"
+    },
+    {
+      "name": "QR Verification",
+      "description": "Cryptographic QR check-in & verification"
+    },
+    {
+      "name": "Paath",
+      "description": "Nitya Paath Shrawan: Vedic Mantras & Shlokas"
+    },
+    {
+      "name": "Gurukul",
+      "description": "Shree Neelkantheshwar Mahadev Gurukulam"
+    },
+    {
+      "name": "Mahaprasad",
+      "description": "Mahaprasad dining slot management & seat booking"
+    },
+    {
+      "name": "Jigyasa Samadhan",
+      "description": "Spiritual inquiry & Sanatan Dharma Q&A"
+    },
+    {
+      "name": "Admin",
+      "description": "Admin dashboard, crowd analytics & audit logs"
+    },
+    {
+      "name": "Health",
+      "description": "System health & liveness probes"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CompleteProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name",
+            "example": "Rahul Sharma"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "example": "rahul@example.com"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "description": "Date of birth (ISO string)",
+            "example": "1990-01-15"
+          },
+          "gender": {
+            "type": "string",
+            "description": "Gender",
+            "example": "Male"
+          },
+          "emergencyContact": {
+            "type": "string",
+            "description": "Emergency contact number",
+            "example": "+919876543210"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateLocationDto": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "Latitude (-90 to 90)",
+            "example": 28.6139
+          },
+          "longitude": {
+            "type": "number",
+            "description": "Longitude (-180 to 180)",
+            "example": 77.209
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "CreatePaathDto": {
+        "type": "object",
+        "properties": {
+          "templeId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the Shloka / Paath"
+          },
+          "sanskritText": {
+            "type": "string",
+            "description": "Original Sanskrit text / Mantra"
+          },
+          "transliteration": {
+            "type": "string",
+            "description": "Roman / Hindi transliteration for chanting"
+          },
+          "hindiMeaning": {
+            "type": "string",
+            "description": "Hindi translation and meaning"
+          },
+          "englishMeaning": {
+            "type": "string",
+            "description": "English translation and meaning"
+          },
+          "audioUrl": {
+            "type": "string",
+            "description": "Audio streaming URL"
+          },
+          "durationSeconds": {
+            "type": "number",
+            "description": "Duration in seconds"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category e.g. Vedic Mantra, Stotram, Aarti"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "default": true
+          },
+          "displayOrder": {
+            "type": "number",
+            "default": 0
+          }
+        },
+        "required": [
+          "title",
+          "sanskritText",
+          "transliteration",
+          "hindiMeaning"
+        ]
+      },
+      "UpdatePaathDto": {
+        "type": "object",
+        "properties": {
+          "templeId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the Shloka / Paath"
+          },
+          "sanskritText": {
+            "type": "string",
+            "description": "Original Sanskrit text / Mantra"
+          },
+          "transliteration": {
+            "type": "string",
+            "description": "Roman / Hindi transliteration for chanting"
+          },
+          "hindiMeaning": {
+            "type": "string",
+            "description": "Hindi translation and meaning"
+          },
+          "englishMeaning": {
+            "type": "string",
+            "description": "English translation and meaning"
+          },
+          "audioUrl": {
+            "type": "string",
+            "description": "Audio streaming URL"
+          },
+          "durationSeconds": {
+            "type": "number",
+            "description": "Duration in seconds"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category e.g. Vedic Mantra, Stotram, Aarti"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "default": true
+          },
+          "displayOrder": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      },
+      "CreateAdmissionDto": {
+        "type": "object",
+        "properties": {
+          "gurukulId": {
+            "type": "string"
+          },
+          "studentName": {
+            "type": "string",
+            "example": "Aarav Sharma"
+          },
+          "guardianName": {
+            "type": "string",
+            "example": "Ramesh Sharma"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "email": {
+            "type": "string",
+            "example": "parent@example.com"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "example": "2012-05-15"
+          },
+          "previousEducation": {
+            "type": "string",
+            "example": "Class 5 passed"
+          },
+          "address": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "example": "Seeking admission for Vedic studies"
+          }
+        },
+        "required": [
+          "studentName",
+          "guardianName",
+          "phone"
+        ]
+      },
+      "UpdateGurukulDto": {
+        "type": "object",
+        "properties": {
+          "templeId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Shree Neelkantheshwar Mahadev Ved Vedang Gurukulam"
+          },
+          "description": {
+            "type": "string"
+          },
+          "about": {
+            "type": "string"
+          },
+          "philosophy": {
+            "type": "string"
+          },
+          "admissionInfo": {
+            "type": "string"
+          },
+          "contactInfo": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "string"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "UpdateAdmissionDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "REVIEWING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "adminNotes": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateScheduleDto": {
+        "type": "object",
+        "properties": {
+          "gurukulId": {
+            "type": "string"
+          },
+          "activityName": {
+            "type": "string",
+            "example": "Pratah Smaran"
+          },
+          "description": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "04:00 AM"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "05:00 AM"
+          },
+          "displayOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "gurukulId",
+          "activityName",
+          "startTime"
+        ]
+      },
+      "UpdateScheduleDto": {
+        "type": "object",
+        "properties": {
+          "gurukulId": {
+            "type": "string"
+          },
+          "activityName": {
+            "type": "string",
+            "example": "Pratah Smaran"
+          },
+          "description": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "04:00 AM"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "05:00 AM"
+          },
+          "displayOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "BookMahaprasadDto": {
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "string",
+            "description": "Mahaprasad Slot ID"
+          },
+          "numberOfPeople": {
+            "type": "number",
+            "default": 1,
+            "example": 2
+          },
+          "devoteeName": {
+            "type": "string",
+            "example": "Ramesh Sharma"
+          },
+          "devoteePhone": {
+            "type": "string",
+            "example": "+919876543210"
+          }
+        },
+        "required": [
+          "slotId",
+          "numberOfPeople",
+          "devoteeName",
+          "devoteePhone"
+        ]
+      },
+      "CreateMahaprasadSlotDto": {
+        "type": "object",
+        "properties": {
+          "templeId": {
+            "type": "string"
+          },
+          "sessionName": {
+            "type": "string",
+            "example": "Madhyahna Mahaprasad (Lunch)"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-08-25"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "12:00 PM"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "02:00 PM"
+          },
+          "capacity": {
+            "type": "number",
+            "default": 100,
+            "example": 100
+          },
+          "pricePerPersonPaise": {
+            "type": "number",
+            "default": 0,
+            "description": "Price in paise (0 = free / token)"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "sessionName",
+          "date",
+          "startTime",
+          "endTime",
+          "capacity"
+        ]
+      },
+      "UpdateMahaprasadSlotDto": {
+        "type": "object",
+        "properties": {
+          "templeId": {
+            "type": "string"
+          },
+          "sessionName": {
+            "type": "string",
+            "example": "Madhyahna Mahaprasad (Lunch)"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-08-25"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "12:00 PM"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "02:00 PM"
+          },
+          "capacity": {
+            "type": "number",
+            "default": 100,
+            "example": 100
+          },
+          "pricePerPersonPaise": {
+            "type": "number",
+            "default": 0,
+            "description": "Price in paise (0 = free / token)"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "AskQuestionDto": {
+        "type": "object",
+        "properties": {
+          "askerName": {
+            "type": "string",
+            "example": "Amit Verma"
+          },
+          "askerPhone": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "question": {
+            "type": "string",
+            "example": "What is the spiritual significance of lighting a Diya in the evening?"
+          },
+          "category": {
+            "type": "string",
+            "example": "Rituals & Traditions"
+          }
+        },
+        "required": [
+          "askerName",
+          "question"
+        ]
+      },
+      "AnswerQuestionDto": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string",
+            "description": "Spiritual answer / guidance"
+          },
+          "answeredBy": {
+            "type": "string",
+            "description": "Name/title of authority providing the answer"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to publish to public spiritual Q&A"
+          }
+        },
+        "required": [
+          "answer"
+        ]
+      }
+    }
+  }
+}

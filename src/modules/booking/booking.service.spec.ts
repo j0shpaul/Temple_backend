@@ -388,4 +388,38 @@ describe("BookingService", () => {
       expect(result.error?.code).toBe("INVALID_QR");
     });
   });
+
+  describe("expirePendingBookings", () => {
+    it("should find expired pending bookings and cancel them while releasing slots", async () => {
+      const expired = [
+        {
+          id: "expired-1",
+          status: "PENDING_PAYMENT",
+          slotId: "slot-1",
+          bookingType: "PUJA",
+          quantity: 2,
+          payment: { id: "pay-1", status: "PENDING" },
+        },
+      ];
+
+      mockPrisma.booking.findMany.mockResolvedValue(expired);
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        return cb({
+          booking: {
+            findUnique: jest.fn().mockResolvedValue(expired[0]),
+            update: jest.fn().mockResolvedValue({ id: "expired-1", status: "CANCELLED" }),
+          },
+          pujaSlot: {
+            updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          },
+          payment: {
+            update: jest.fn().mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
+          },
+        });
+      });
+
+      const count = await service.expirePendingBookings(30);
+      expect(count).toBe(1);
+    });
+  });
 });

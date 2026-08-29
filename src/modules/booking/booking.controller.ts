@@ -21,6 +21,7 @@ import {
 import { BookingService } from "./booking.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -88,7 +89,7 @@ export class BookingController {
   }
 
   @Get("temple/:templeId")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get temple bookings (staff+)" })
@@ -132,7 +133,7 @@ export class BookingController {
   }
 
   @Post(":id/check-in")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Check in booking (staff+)" })

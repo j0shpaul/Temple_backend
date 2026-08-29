@@ -65,7 +65,7 @@ export class SevaService {
     isActive?: boolean,
   ): Promise<ApiResponseDto<any[]>> {
     const where: any = { templeId };
-    if (isActive !== undefined) where.isActive = isActive;
+    if (isActive !== undefined) where.isActive = String(isActive) === "true";
 
     const sevas = await this.prisma.seva.findMany({
       where,
@@ -99,7 +99,9 @@ export class SevaService {
     },
   ): Promise<ApiResponseDto<any>> {
     const { date, sevaId, status, page = 1, limit = 50 } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 50);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = { status: status || "ACTIVE" };
     if (date) {
@@ -122,7 +124,7 @@ export class SevaService {
       this.prisma.sevaSlot.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { date: "asc" },
         include: {
           seva: {
@@ -140,8 +142,8 @@ export class SevaService {
     }));
 
     return ApiResponseDto.success(
-      { slots: slotsWithAvail, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { slots: slotsWithAvail, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 

@@ -21,6 +21,7 @@ import {
 import { AccommodationService } from "./accommodation.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -41,7 +42,7 @@ export class AccommodationController {
   }
 
   @Post("rooms")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create room (manager+)" })
@@ -60,7 +61,7 @@ export class AccommodationController {
   }
 
   @Put("rooms/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update room (manager+)" })
@@ -73,7 +74,7 @@ export class AccommodationController {
   }
 
   @Delete("rooms/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN")
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -97,23 +98,26 @@ export class AccommodationController {
     type: String,
     description: "YYYY-MM-DD",
   })
+  @ApiQuery({ name: "type", required: false, type: String })
   async getAvailability(
     @Param("templeId") templeId: string,
     @Query("checkIn") checkIn: string,
     @Query("checkOut") checkOut: string,
+    @Query("type") type?: string,
   ) {
     return this.accommodationService.getAvailability(
       templeId,
       checkIn,
       checkOut,
+      type,
     );
   }
 
   // Bookings
-  @Post("bookings")
+  @Post("book")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Create accommodation booking" })
+  @ApiOperation({ summary: "Create accommodation booking (hold room)" })
   async createBooking(
     @Param("templeId") templeId: string,
     @Body() data: any,
@@ -125,26 +129,24 @@ export class AccommodationController {
     });
   }
 
-  @Post("bookings/verify")
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Verify booking payment" })
-  async verifyPayment(@Body() data: any) {
-    return this.accommodationService.verifyBookingPayment(data);
-  }
-
   @Get("bookings/me")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Get current user bookings" })
+  @ApiOperation({ summary: "Get current user accommodation bookings" })
+  @ApiQuery({ name: "status", required: false, type: String })
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "limit", required: false, type: Number })
   async getMyBookings(
     @CurrentUser() user: any,
+    @Query("status") status?: string,
     @Query("page") page?: number,
     @Query("limit") limit?: number,
   ) {
-    return this.accommodationService.getUserBookings(user.id, { page, limit });
+    return this.accommodationService.getUserBookings(user.id, {
+      status,
+      page,
+      limit,
+    });
   }
 
   @Get("bookings/:id")
@@ -156,7 +158,7 @@ export class AccommodationController {
   }
 
   @Get("bookings")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get temple bookings (staff+)" })
@@ -177,7 +179,7 @@ export class AccommodationController {
   }
 
   @Post("bookings/:id/check-in")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Check in booking (staff+)" })
@@ -190,7 +192,7 @@ export class AccommodationController {
   }
 
   @Post("bookings/:id/check-out")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Check out booking (staff+)" })

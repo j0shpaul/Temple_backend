@@ -19,6 +19,7 @@ import {
 } from "@nestjs/swagger";
 
 import { UsersService } from "./users.service";
+import { UpdateLocationDto } from "./dto/update-location.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -54,6 +55,22 @@ export class UsersController {
   @ApiOperation({ summary: "Get current user profile" })
   async getProfile(@CurrentUser() user: any) {
     return this.usersService.findById(user.id);
+  }
+
+  @Get("me")
+  @ApiOperation({ summary: "Get current user profile (alias)" })
+  async getMe(@CurrentUser() user: any) {
+    return this.usersService.findById(user.id);
+  }
+
+  @Put("location")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Update current user location coordinates" })
+  async updateLocation(
+    @CurrentUser() user: any,
+    @Body() dto: UpdateLocationDto,
+  ) {
+    return this.usersService.updateLocation(user.id, dto);
   }
 
   @Get(":id")

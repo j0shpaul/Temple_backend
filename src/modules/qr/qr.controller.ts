@@ -20,6 +20,7 @@ import {
 import { QrService } from "./qr.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -38,7 +39,7 @@ export class QrController {
   }
 
   @Post("check-in/booking")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Check in booking via QR (staff+)" })
@@ -62,7 +63,7 @@ export class QrController {
   }
 
   @Post("check-in/accommodation")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Check in accommodation via QR (staff+)" })
@@ -78,7 +79,7 @@ export class QrController {
   }
 
   @Post("check-out/accommodation")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Check out accommodation via QR (staff+)" })
@@ -89,7 +90,7 @@ export class QrController {
   }
 
   @Post("temples/:templeId/regenerate/booking-qrs")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Regenerate missing booking QR codes (manager+)" })
@@ -98,7 +99,7 @@ export class QrController {
   }
 
   @Post("temples/:templeId/regenerate/accommodation-qrs")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({

@@ -19,9 +19,29 @@ export class PagesController {
     type: String,
     description: "Temple ID (defaults to primary temple)",
   })
+  @ApiQuery({
+    name: "userLat",
+    required: false,
+    type: Number,
+    description: "User latitude for distance calculation (-90 to 90)",
+  })
+  @ApiQuery({
+    name: "userLng",
+    required: false,
+    type: Number,
+    description: "User longitude for distance calculation (-180 to 180)",
+  })
   @ApiResponse({ status: 200, description: "Home page aggregated dataset" })
-  async getHomePage(@Query("templeId") templeId?: string) {
-    return this.pagesService.getHomePage(templeId);
+  async getHomePage(
+    @Query("templeId") templeId?: string,
+    @Query("userLat") userLat?: number,
+    @Query("userLng") userLng?: number,
+  ) {
+    return this.pagesService.getHomePage(
+      templeId,
+      userLat ? Number(userLat) : undefined,
+      userLng ? Number(userLng) : undefined,
+    );
   }
 
   @Get("about")
@@ -298,11 +318,76 @@ export class PagesController {
     type: String,
     description: "Temple ID",
   })
+  @ApiQuery({
+    name: "userLat",
+    required: false,
+    type: Number,
+    description: "User latitude for distance calculation (-90 to 90)",
+  })
+  @ApiQuery({
+    name: "userLng",
+    required: false,
+    type: Number,
+    description: "User longitude for distance calculation (-180 to 180)",
+  })
   @ApiResponse({
     status: 200,
     description: "Temple overview aggregated dataset",
   })
-  async getTempleOverview(@Query("templeId") templeId?: string) {
-    return this.pagesService.getTempleOverview(templeId);
+  async getTempleOverview(
+    @Query("templeId") templeId?: string,
+    @Query("userLat") userLat?: number,
+    @Query("userLng") userLng?: number,
+  ) {
+    return this.pagesService.getTempleOverview(
+      templeId,
+      userLat ? Number(userLat) : undefined,
+      userLng ? Number(userLng) : undefined,
+    );
+  }
+
+  @Get("gurukul")
+  @ApiOperation({
+    summary: "Gurukul Page Aggregation",
+    description:
+      "Aggregates Gurukul identity, Vedic philosophy, admission information, and daily Dincharya routine schedule.",
+  })
+  @ApiQuery({ name: "templeId", required: false, type: String })
+  @ApiResponse({ status: 200, description: "Gurukul page aggregated dataset" })
+  async getGurukulPage(@Query("templeId") templeId?: string) {
+    return this.pagesService.getGurukulPage(templeId);
+  }
+
+  @Get("paath")
+  @ApiOperation({
+    summary: "Nitya Paath Shrawan Page Aggregation",
+    description:
+      "Aggregates published Shlokas, Vedic Mantras, Paath chants, transliterations, meanings, and audio tracks.",
+  })
+  @ApiQuery({ name: "templeId", required: false, type: String })
+  @ApiQuery({ name: "category", required: false, type: String })
+  @ApiResponse({ status: 200, description: "Paath page aggregated dataset" })
+  async getPaathPage(
+    @Query("templeId") templeId?: string,
+    @Query("category") category?: string,
+  ) {
+    return this.pagesService.getPaathPage(templeId, category);
+  }
+
+  @Get("maha-prasad")
+  @ApiOperation({
+    summary: "Mahaprasad Dining Page Aggregation",
+    description:
+      "Aggregates upcoming Mahaprasad dining sessions, timings, pricing, and live seat capacity for bookings.",
+  })
+  @ApiQuery({ name: "templeId", required: false, type: String })
+  @ApiQuery({ name: "date", required: false, type: String })
+  @ApiResponse({ status: 200, description: "Mahaprasad page aggregated dataset" })
+  async getMahaPrasadPage(
+    @Query("templeId") templeId?: string,
+    @Query("date") date?: string,
+  ) {
+    return this.pagesService.getMahaPrasadPage(templeId, date);
   }
 }
+

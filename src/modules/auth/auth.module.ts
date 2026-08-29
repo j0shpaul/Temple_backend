@@ -7,6 +7,8 @@ import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { JwtRefreshStrategy } from "./strategies/jwt-refresh.strategy";
+import { SmsService } from "./sms/sms.service";
+import { Msg91SmsProvider } from "./sms/msg91-sms.provider";
 import { PrismaModule } from "../prisma/prisma.module";
 import { RedisModule } from "../redis/redis.module";
 
@@ -25,7 +27,14 @@ import { RedisModule } from "../redis/redis.module";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
-  exports: [AuthService, JwtModule],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    SmsService,
+    Msg91SmsProvider,
+  ],
+  exports: [AuthService, JwtModule, SmsService],
 })
 export class AuthModule {}
+

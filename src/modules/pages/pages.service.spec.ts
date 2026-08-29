@@ -214,14 +214,48 @@ describe("PagesService", () => {
     });
   });
 
-  describe("getTempleOverview", () => {
-    it("should return comprehensive temple overview", async () => {
-      const res = await service.getTempleOverview("temple-1");
-      expect(res.success).toBe(true);
-      expect(res.data.temple).toBeDefined();
-      expect(res.data.timings).toBeDefined();
-      expect(res.data.contact).toBeDefined();
-      expect(res.data.location).toBeDefined();
+  describe("invalidateTemplePages", () => {
+    it("should invalidate explicit page keys for a specific templeId", async () => {
+      mockRedis.del = jest.fn().mockResolvedValue(2);
+      await service.invalidateTemplePages("temple-1", "home", "darshan");
+
+      expect(mockRedis.del).toHaveBeenCalledWith(
+        "page:home:temple-1",
+        "page:darshan:temple-1"
+      );
+    });
+
+    it("should scan and invalidate keys across multi-step cursor iterations when templeId is omitted", async () => {
+      mockRedis.del = jest.fn().mockResolvedValue(3);
+      // Simulate cursor progression: "0" -> "42" (found page:home:t1) -> "0" (found page:home:t2)
+      mockRedis.scan = jest
+        .fn()
+        .mockResolvedValueOnce(["42", ["page:home:t1"]])
+        .mockResolvedValueOnce(["0", ["page:home:t2"]])
+        .mockResolvedValue(["0", []]); // for remaining pages
+
+      await service.invalidateTemplePages(undefined, "home");
+
+      expect(mockRedis.scan).toHaveBeenCalledWith("0", "MATCH", "page:home:*", "COUNT", 100);
+      expect(mockRedis.scan).toHaveBeenCalledWith("42", "MATCH", "page:home:*", "COUNT", 100);
+      expect(mockRedis.del).toHaveBeenCalledWith("page:home:t1", "page:home:t2");
+    });
+
+    it("should handle empty keyspace safely without calling redis.del", async () => {
+      mockRedis.del = jest.fn();
+      mockRedis.scan = jest.fn().mockResolvedValue(["0", []]);
+
+      await service.invalidateTemplePages(undefined, "home");
+
+      expect(mockRedis.scan).toHaveBeenCalled();
+      expect(mockRedis.del).not.toHaveBeenCalled();
+    });
+
+    it("should handle Redis scan errors safely without throwing uncaught exceptions", async () => {
+      mockRedis.scan = jest.fn().mockRejectedValue(new Error("Redis connection dropped"));
+
+      await expect(service.invalidateTemplePages(undefined, "home")).resolves.not.toThrow();
     });
   });
 });
+

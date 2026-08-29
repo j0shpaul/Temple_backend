@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "../prisma/prisma.service";
 import { AccommodationService } from "./accommodation.service";
-import { RazorpayService } from "../payments/razorpay.service";
+import { CashfreeService } from "../payments/cashfree.service";
 import { AccommodationStatus } from "@prisma/client";
 import {
   NotFoundException,
@@ -13,7 +13,7 @@ import {
 describe("AccommodationService", () => {
   let service: AccommodationService;
   let prisma: PrismaService;
-  let razorpay: RazorpayService;
+  let cashfree: CashfreeService;
 
   const mockRoom = {
     id: "room-1",
@@ -76,11 +76,17 @@ describe("AccommodationService", () => {
     $transaction: jest.fn().mockImplementation((fn) => fn(mockPrisma)),
   };
 
-  const mockRazorpayService = {
-    createOrder: jest.fn(),
-    verifyPayment: jest.fn(),
-    refund: jest.fn(),
-    getKeyId: jest.fn().mockReturnValue("rzp_test_key"),
+  const mockCashfreeService = {
+    createOrder: jest.fn().mockResolvedValue({
+      id: "cf_order_123",
+      orderId: "cf_order_123",
+      paymentSessionId: "session_123",
+    }),
+    fetchOrderStatus: jest.fn().mockResolvedValue({
+      orderStatus: "PAID",
+      amount: 1000000,
+      payments: [{ id: "pay_1", status: "SUCCESS" }],
+    }),
   };
 
   beforeEach(async () => {
@@ -88,13 +94,13 @@ describe("AccommodationService", () => {
       providers: [
         AccommodationService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: RazorpayService, useValue: mockRazorpayService },
+        { provide: CashfreeService, useValue: mockCashfreeService },
       ],
     }).compile();
 
     service = module.get<AccommodationService>(AccommodationService);
     prisma = module.get<PrismaService>(PrismaService);
-    razorpay = module.get<RazorpayService>(RazorpayService);
+    cashfree = module.get<CashfreeService>(CashfreeService);
     jest.clearAllMocks();
   });
 
@@ -198,7 +204,11 @@ describe("AccommodationService", () => {
       mockPrisma.room.findUnique.mockResolvedValue(mockRoom);
       mockPrisma.accommodationBooking.findFirst.mockResolvedValue(null);
       mockPrisma.accommodationBooking.create.mockResolvedValue(mockBooking);
-      mockRazorpayService.createOrder.mockResolvedValue({ id: "order_123" });
+      mockCashfreeService.createOrder.mockResolvedValue({
+        id: "cf_order_123",
+        orderId: "cf_order_123",
+        paymentSessionId: "session_123",
+      } as any);
       mockPrisma.payment.create.mockResolvedValue({});
 
       const result = await service.createBooking("user-1", {
@@ -210,7 +220,7 @@ describe("AccommodationService", () => {
       });
 
       expect(result.data.booking).toEqual(mockBooking);
-      expect(result.data.razorpayOrderId).toBe("order_123");
+      expect(result.data.orderId).toBe("cf_order_123");
       expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
 
@@ -283,7 +293,6 @@ describe("AccommodationService", () => {
         accommodationId: "booking-1",
         status: "PENDING",
       });
-      mockRazorpayService.verifyPayment.mockResolvedValue(true);
       mockPrisma.payment.update.mockResolvedValue({ status: "SUCCESS" });
       mockPrisma.accommodationBooking.update.mockResolvedValue({
         ...mockBooking,
@@ -293,9 +302,6 @@ describe("AccommodationService", () => {
 
       const result = await service.verifyBookingPayment({
         bookingId: "booking-1",
-        razorpayOrderId: "order_123",
-        razorpayPaymentId: "pay_123",
-        razorpaySignature: "sig_123",
       });
 
       expect(result.data.status).toBe("CONFIRMED");
@@ -486,6 +492,34 @@ describe("AccommodationService", () => {
       await expect(service.deleteRoom("room-1", "MANAGER")).rejects.toThrow(
         ForbiddenException,
       );
+    });
+  });
+
+  describe("expirePendingBookings", () => {
+    it("should expire abandoned accommodation bookings", async () => {
+      const expired = [
+        {
+          id: "acc-exp-1",
+          status: "PENDING_PAYMENT",
+          payment: { id: "pay-1", status: "PENDING" },
+        },
+      ];
+
+      mockPrisma.accommodationBooking.findMany.mockResolvedValue(expired);
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        return cb({
+          accommodationBooking: {
+            findUnique: jest.fn().mockResolvedValue(expired[0]),
+            update: jest.fn().mockResolvedValue({ id: "acc-exp-1", status: "CANCELLED" }),
+          },
+          payment: {
+            update: jest.fn().mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
+          },
+        });
+      });
+
+      const count = await service.expirePendingBookings(30);
+      expect(count).toBe(1);
     });
   });
 });

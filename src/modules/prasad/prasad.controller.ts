@@ -21,6 +21,7 @@ import {
 import { PrasadService } from "./prasad.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -60,7 +61,7 @@ export class PrasadController {
   }
 
   @Put("products/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update prasad product (staff+)" })
@@ -73,24 +74,24 @@ export class PrasadController {
   }
 
   @Put("products/:id/stock")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
+  @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Adjust product stock (staff+)" })
-  async adjustStock(
+  @ApiOperation({ summary: "Update prasad product stock (manager+)" })
+  async updateStock(
     @Param("id") id: string,
-    @Body() data: { delta: number },
+    @Body() data: { quantity: number; mode: "SET" | "INCREMENT" | "DECREMENT" },
     @CurrentUser() user: any,
   ) {
-    return this.prasadService.adjustStock(id, data.delta, user.role);
+    return this.prasadService.updateStock(id, data.quantity, data.mode, user.role);
   }
 
   @Delete("products/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
+  @Roles("ADMIN", "SUPER_ADMIN")
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Delete prasad product (manager+)" })
+  @ApiOperation({ summary: "Delete prasad product (admin only)" })
   async deleteProduct(@Param("id") id: string, @CurrentUser() user: any) {
     return this.prasadService.deleteProduct(id, user.role);
   }
@@ -116,13 +117,16 @@ export class PrasadController {
   @Post("orders")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Create prasad order" })
+  @ApiOperation({ summary: "Create prasad order (checkout hold)" })
   async createOrder(
     @Param("templeId") templeId: string,
     @Body() data: any,
     @CurrentUser() user: any,
   ) {
-    return this.prasadService.createOrder(user.id, { ...data, templeId });
+    return this.prasadService.createOrder(user.id, {
+      ...data,
+      templeId,
+    });
   }
 
   @Post("orders/verify")
@@ -136,15 +140,21 @@ export class PrasadController {
   @Get("orders/me")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Get current user orders" })
+  @ApiOperation({ summary: "Get current user prasad orders" })
+  @ApiQuery({ name: "status", required: false, type: String })
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "limit", required: false, type: Number })
   async getMyOrders(
     @CurrentUser() user: any,
+    @Query("status") status?: string,
     @Query("page") page?: number,
     @Query("limit") limit?: number,
   ) {
-    return this.prasadService.getUserOrders(user.id, { page, limit });
+    return this.prasadService.getUserOrders(user.id, {
+      status,
+      page,
+      limit,
+    });
   }
 
   @Get("orders/:id")
@@ -156,7 +166,7 @@ export class PrasadController {
   }
 
   @Get("orders")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get temple orders (staff+)" })
@@ -177,7 +187,7 @@ export class PrasadController {
   }
 
   @Put("orders/:id/status")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update order status (staff+)" })

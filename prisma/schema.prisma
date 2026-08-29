@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================================
@@ -37,8 +38,10 @@ enum BookingStatus {
 
 enum PaymentStatus {
   PENDING
+  PROCESSING
   SUCCESS
   FAILED
+  CANCELLED
   REFUNDED
   PARTIALLY_REFUNDED
 }
@@ -49,6 +52,7 @@ enum PaymentEntityType {
   DONATION
   PRASAD_ORDER
   ACCOMMODATION_BOOKING
+  MAHAPRASAD_BOOKING
 }
 
 enum DonationStatus {
@@ -157,6 +161,26 @@ enum TempleStatus {
   INACTIVE
 }
 
+enum GurukulAdmissionStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+enum JigyasaStatus {
+  PENDING
+  ANSWERED
+  REJECTED
+}
+
+enum MahaprasadBookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
 enum AuditAction {
   CREATE
   UPDATE
@@ -194,8 +218,14 @@ model User {
   status       UserStatus @default(ACTIVE)
   isVerified   Boolean    @default(false)
   fcmToken     String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  dateOfBirth       DateTime?
+  gender            String?
+  emergencyContact  String?
+  latitude          Float?
+  longitude         Float?
+  isProfileComplete Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   refreshTokens RefreshToken[]
   bookings      Booking[]
@@ -205,9 +235,29 @@ model User {
   accommodations AccommodationBooking[]
   notifications Notification[]
   addresses     Address[]
+  mahaprasadBookings MahaprasadBooking[]
+  jigyasas      Jigyasa[]
+  staffAssignments StaffAssignment[]
 
   @@index([role])
   @@index([status])
+  @@index([latitude, longitude])
+  @@index([isProfileComplete])
+}
+
+model StaffAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  templeId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  temple Temple @relation(fields: [templeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, templeId])
+  @@index([userId])
+  @@index([templeId])
 }
 
 model RefreshToken {
@@ -263,6 +313,10 @@ model Temple {
   accommodations    AccommodationBooking[]
   announcements     Announcement[]
   crowdSnapshots    CrowdSnapshot[]
+  paath             Paath[]
+  gurukuls          Gurukul[]
+  mahaprasadSlots   MahaprasadSlot[]
+  staffAssignments  StaffAssignment[]
 
   @@index([status])
 }
@@ -529,6 +583,7 @@ model Booking {
   @@index([slotId])
   @@index([slotDate])
   @@index([reference])
+  @@index([templeId, status, slotDate])
 }
 
 model BookingAttendee {
@@ -569,16 +624,19 @@ model Payment {
   donationId        String?           @unique
   prasadOrderId     String?           @unique
   accommodationId   String?           @unique
+  mahaprasadId      String?           @unique
   entityType        PaymentEntityType
   userId            String
   amountPaise       Int
   currency          String            @default("INR")
   status            PaymentStatus     @default(PENDING)
+  gateway           String            @default("CASHFREE")
   razorpayOrderId   String?           @unique
   razorpayPaymentId String?
   razorpaySignature String?
   receiptNumber     String?           @unique
   description       String?
+  failureReason     String?
   paidAt            DateTime?
   refundedAt        DateTime?
   refundAmountPaise Int?
@@ -590,6 +648,7 @@ model Payment {
   donation          Donation?         @relation("PaymentDonation", fields: [donationId], references: [id])
   prasadOrder       PrasadOrder?      @relation("PaymentPrasadOrder", fields: [prasadOrderId], references: [id])
   accommodation     AccommodationBooking? @relation("PaymentAccommodation", fields: [accommodationId], references: [id])
+  mahaprasad        MahaprasadBooking? @relation("PaymentMahaprasad", fields: [mahaprasadId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -597,6 +656,9 @@ model Payment {
   @@index([donationId])
   @@index([prasadOrderId])
   @@index([accommodationId])
+  @@index([mahaprasadId])
+  @@index([status, createdAt])
+  @@index([userId, status])
 }
 
 model PaymentEvent {
@@ -661,6 +723,7 @@ model Donation {
   @@index([templeId])
   @@index([causeId])
   @@index([status])
+  @@index([templeId, status, createdAt])
 }
 
 model DonationReceipt {
@@ -785,6 +848,7 @@ model PrasadOrder {
   @@index([userId])
   @@index([templeId])
   @@index([status])
+  @@index([templeId, status, createdAt])
 }
 
 model PrasadOrderItem {
@@ -855,6 +919,7 @@ model AccommodationBooking {
   @@index([status])
   @@index([checkIn])
   @@index([checkOut])
+  @@index([roomId, status, checkIn, checkOut])
 }
 
 // ============================================================
@@ -918,6 +983,7 @@ model AuditLog {
   @@index([action])
   @@index([entity])
   @@index([createdAt])
+  @@index([entity, entityId])
 }
 
 model CrowdSnapshot {
@@ -934,4 +1000,174 @@ model CrowdSnapshot {
 
   @@index([templeId])
   @@index([date])
+}
+
+// ============================================================
+// NITYA PAATH SHRAWAN
+// ============================================================
+
+model Paath {
+  id              String    @id @default(cuid())
+  templeId        String?
+  title           String
+  sanskritText    String
+  transliteration String
+  hindiMeaning    String
+  englishMeaning  String?
+  audioUrl        String?
+  durationSeconds Int?
+  category        String?
+  isPublished     Boolean   @default(true)
+  displayOrder    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  temple          Temple?   @relation(fields: [templeId], references: [id], onDelete: SetNull)
+
+  @@index([templeId])
+  @@index([isPublished])
+  @@index([category])
+  @@index([displayOrder])
+}
+
+// ============================================================
+// GURUKUL & DINCHARYA & ADMISSION
+// ============================================================
+
+model Gurukul {
+  id            String            @id @default(cuid())
+  templeId      String?
+  name          String
+  description   String?
+  about         String?
+  philosophy    String?
+  admissionInfo String?
+  contactInfo   String?
+  rules         String?
+  isPublished   Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  temple        Temple?           @relation(fields: [templeId], references: [id], onDelete: SetNull)
+  schedules     GurukulSchedule[]
+  admissions    GurukulAdmission[]
+
+  @@index([templeId])
+  @@index([isPublished])
+}
+
+model GurukulSchedule {
+  id           String   @id @default(cuid())
+  gurukulId    String
+  activityName String
+  description  String?
+  startTime    String   // e.g. "04:00 AM" or "04:00"
+  endTime      String?  // e.g. "11:00 AM" or "11:00"
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  gurukul      Gurukul  @relation(fields: [gurukulId], references: [id], onDelete: Cascade)
+
+  @@index([gurukulId])
+  @@index([isActive])
+  @@index([displayOrder])
+}
+
+model GurukulAdmission {
+  id                String                 @id @default(cuid())
+  gurukulId         String?
+  studentName       String
+  guardianName      String
+  phone             String
+  email             String?
+  dateOfBirth       String?
+  previousEducation String?
+  address           String?
+  message           String?
+  status            GurukulAdmissionStatus @default(PENDING)
+  adminNotes        String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  gurukul           Gurukul?               @relation(fields: [gurukulId], references: [id], onDelete: SetNull)
+
+  @@index([gurukulId])
+  @@index([status])
+  @@index([phone])
+  @@index([createdAt])
+}
+
+// ============================================================
+// MAHAPRASAD (Dining & Slot Booking)
+// ============================================================
+
+model MahaprasadSlot {
+  id                  String               @id @default(cuid())
+  templeId            String
+  sessionName         String
+  date                DateTime
+  startTime           String
+  endTime             String
+  capacity            Int                  @default(100)
+  bookedCount         Int                  @default(0)
+  isActive            Boolean              @default(true)
+  pricePerPersonPaise Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  temple              Temple               @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  bookings            MahaprasadBooking[]
+
+  @@index([templeId])
+  @@index([date])
+  @@index([isActive])
+}
+
+model MahaprasadBooking {
+  id             String                  @id @default(cuid())
+  userId         String?
+  slotId         String
+  numberOfPeople Int                     @default(1)
+  devoteeName    String
+  devoteePhone   String
+  reference      String                  @unique
+  status         MahaprasadBookingStatus  @default(CONFIRMED)
+  paymentId      String?                 @unique
+  qrToken        String?                 @unique
+  checkedInAt    DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  slot           MahaprasadSlot          @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  user           User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  payment        Payment?                @relation("PaymentMahaprasad")
+
+  @@index([userId])
+  @@index([slotId])
+  @@index([status])
+  @@index([reference])
+  @@index([slotId, status])
+}
+
+// ============================================================
+// JIGYASA SAMADHAN (Spiritual Q&A)
+// ============================================================
+
+model Jigyasa {
+  id          String        @id @default(cuid())
+  userId      String?
+  askerName   String
+  askerPhone  String?
+  question    String
+  category    String?
+  answer      String?
+  answeredBy  String?
+  answeredAt  DateTime?
+  status      JigyasaStatus @default(PENDING)
+  isPublic    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([isPublic])
+  @@index([category])
+  @@index([createdAt])
 }

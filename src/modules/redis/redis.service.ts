@@ -18,10 +18,12 @@ export class RedisService
     super(configService.get<string>("REDIS_URL") || "redis://localhost:6379", {
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => {
-        if (times > 3) {
+        if (times > 20) {
+          this.logger.error("Redis max reconnection retries (20) exceeded");
           return null;
         }
-        return Math.min(times * 200, 2000);
+        const delay = Math.min(times * 150, 3000);
+        return delay;
       },
       lazyConnect: true,
     });

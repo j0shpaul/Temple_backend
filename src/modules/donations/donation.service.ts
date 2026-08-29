@@ -7,14 +7,14 @@ import {
 
 import { PrismaService } from "../prisma/prisma.service";
 import { ApiResponseDto } from "../../common/dto/api-response.dto";
-import { RazorpayService } from "../payments/razorpay.service";
+import { PaymentService } from "../payments/payment.service";
 import { IdUtil } from "../../common/utils/id.util";
 
 @Injectable()
 export class DonationService {
   constructor(
     private prisma: PrismaService,
-    private razorpay: RazorpayService,
+    private paymentService: PaymentService,
   ) {}
 
   async createCause(
@@ -58,7 +58,7 @@ export class DonationService {
     isActive?: boolean,
   ): Promise<ApiResponseDto<any[]>> {
     const where: any = { templeId };
-    if (isActive !== undefined) where.isActive = isActive;
+    if (isActive !== undefined) where.isActive = String(isActive) === "true";
 
     const causes = await this.prisma.donationCause.findMany({
       where,
@@ -112,7 +112,10 @@ export class DonationService {
       isAnonymous?: boolean;
       donorName?: string;
       message?: string;
+      isDirect?: boolean;
+      paymentMethod?: string;
     },
+    actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
     if (data.amountPaise <= 0)
       throw new BadRequestException("Donation amount must be positive");
@@ -122,7 +125,75 @@ export class DonationService {
     });
     if (!cause) throw new NotFoundException("Donation cause not found");
 
+    const isStaffAdmin = actorRole && ["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole);
+    const isDirectOffline = data.isDirect === true || isStaffAdmin;
+
     const reference = IdUtil.generateOrderReference().replace("ORD", "DON");
+
+    if (isDirectOffline) {
+      const temple = await this.prisma.temple.findUnique({
+        where: { id: data.templeId },
+      });
+
+      const receiptNumber = IdUtil.generateReceiptNumber();
+      const result = await this.prisma.$transaction(async (tx) => {
+        const donation = await tx.donation.create({
+          data: {
+            userId,
+            templeId: data.templeId,
+            causeId: data.causeId,
+            amountPaise: data.amountPaise,
+            currency: "INR",
+            isAnonymous: data.isAnonymous ?? false,
+            donorName: data.donorName,
+            message: data.message,
+            status: "SUCCESS",
+            reference,
+          },
+          include: { cause: true, user: true },
+        });
+
+        const payment = await tx.payment.create({
+          data: {
+            donationId: donation.id,
+            entityType: "DONATION",
+            userId,
+            amountPaise: data.amountPaise,
+            currency: "INR",
+            status: "SUCCESS",
+            receiptNumber,
+            description: `Direct donation: ${cause.name}`,
+            paidAt: new Date(),
+          },
+        });
+
+        const receipt = await tx.donationReceipt.create({
+          data: {
+            donationId: donation.id,
+            receiptNumber,
+            amountPaise: donation.amountPaise,
+            donorName: donation.isAnonymous
+              ? "Anonymous"
+              : donation.donorName || undefined,
+            causeName: cause.name,
+            templeName: temple?.name || "Temple",
+          },
+        });
+
+        return { donation, payment, receipt };
+      });
+
+      return ApiResponseDto.success({
+        donationId: result.donation.id,
+        reference,
+        status: "SUCCESS",
+        amountPaise: data.amountPaise,
+        receiptNumber: result.receipt.receiptNumber,
+        receipt: result.receipt,
+        donation: result.donation,
+      });
+    }
+
     const donation = await this.prisma.donation.create({
       data: {
         userId,
@@ -138,42 +209,26 @@ export class DonationService {
       },
     });
 
-    // Create Razorpay order
-    const order = await this.razorpay.createOrder({
-      amount: data.amountPaise,
-      currency: "INR",
-      receipt: IdUtil.generateReceiptNumber(),
-      notes: { donationId: donation.id, reference },
-    });
-
-    await this.prisma.payment.create({
-      data: {
-        donationId: donation.id,
-        entityType: "DONATION",
-        userId,
-        amountPaise: data.amountPaise,
-        currency: "INR",
-        status: "PENDING",
-        razorpayOrderId: order.id,
-        description: `Donation: ${cause.name}`,
-      },
-    });
+    // Delegate payment order creation to central PaymentService
+    const paymentResult = await this.paymentService.createPaymentForDonation(
+      donation.id,
+      userId,
+    );
 
     return ApiResponseDto.success({
       donationId: donation.id,
       reference,
-      razorpayOrderId: order.id,
+      orderId: paymentResult.data?.orderId,
+      paymentSessionId: paymentResult.data?.paymentSessionId,
       amountPaise: data.amountPaise,
       currency: "INR",
-      keyId: this.razorpay.getKeyId(),
+      gateway: "CASHFREE",
     });
   }
 
   async verifyDonation(data: {
     donationId: string;
-    razorpayOrderId: string;
-    razorpayPaymentId: string;
-    razorpaySignature: string;
+    orderId?: string;
   }): Promise<ApiResponseDto<any>> {
     const donation = await this.prisma.donation.findUnique({
       where: { id: data.donationId },
@@ -184,68 +239,9 @@ export class DonationService {
       where: { donationId: data.donationId },
     });
     if (!payment) throw new NotFoundException("Payment not found");
-    if (payment.status === "SUCCESS") {
-      throw new BadRequestException("Donation already processed");
-    }
 
-    const isValid = await this.razorpay.verifyPayment(
-      data.razorpayOrderId,
-      data.razorpayPaymentId,
-      data.razorpaySignature,
-    );
-    if (!isValid) throw new BadRequestException("Invalid payment signature");
-
-    const result = await this.prisma.$transaction(async (tx) => {
-      const updatedPayment = await tx.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: "SUCCESS",
-          razorpayPaymentId: data.razorpayPaymentId,
-          razorpaySignature: data.razorpaySignature,
-          paidAt: new Date(),
-        },
-      });
-
-      const updatedDonation = await tx.donation.update({
-        where: { id: data.donationId },
-        data: { status: "SUCCESS" },
-      });
-
-      // Issue receipt
-      const cause = await tx.donationCause.findUnique({
-        where: { id: updatedDonation.causeId },
-      });
-      const temple = await tx.temple.findUnique({
-        where: { id: updatedDonation.templeId },
-      });
-
-      const receipt = await tx.donationReceipt.create({
-        data: {
-          donationId: updatedDonation.id,
-          receiptNumber: IdUtil.generateReceiptNumber(),
-          amountPaise: updatedDonation.amountPaise,
-          donorName: updatedDonation.isAnonymous
-            ? "Anonymous"
-            : updatedDonation.donorName || undefined,
-          causeName: cause?.name || "General Donation",
-          templeName: temple?.name || "Temple",
-        },
-      });
-
-      await tx.paymentEvent.create({
-        data: {
-          paymentId: payment.id,
-          eventType: "PAYMENT_CAPTURED",
-          status: "SUCCESS",
-          amountPaise: payment.amountPaise,
-          payload: data as any,
-        },
-      });
-
-      return { payment: updatedPayment, donation: updatedDonation, receipt };
-    });
-
-    return ApiResponseDto.success(result);
+    // Server-side authoritative status verification & reconciliation
+    return this.paymentService.reconcilePayment(payment.id);
   }
 
   async getById(
@@ -306,13 +302,15 @@ export class DonationService {
     params: { page?: number; limit?: number },
   ): Promise<ApiResponseDto<any>> {
     const { page = 1, limit = 20 } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 20);
+    const skip = (pageNum - 1) * limitNum;
 
     const [donations, total] = await Promise.all([
       this.prisma.donation.findMany({
         where: { userId },
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: "desc" },
         include: {
           cause: { select: { id: true, name: true } },
@@ -324,8 +322,8 @@ export class DonationService {
     ]);
 
     return ApiResponseDto.success(
-      { donations, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { donations, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 
@@ -338,7 +336,9 @@ export class DonationService {
     },
   ): Promise<ApiResponseDto<any>> {
     const { status, page = 1, limit = 50 } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 50);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = { templeId };
     if (status) where.status = status;
@@ -347,7 +347,7 @@ export class DonationService {
       this.prisma.donation.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: "desc" },
         include: {
           cause: { select: { id: true, name: true } },
@@ -359,8 +359,8 @@ export class DonationService {
     ]);
 
     return ApiResponseDto.success(
-      { donations, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { donations, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 }

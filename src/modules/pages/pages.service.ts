@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { RedisService } from "../redis/redis.service";
 import { ApiResponseDto } from "../../common/dto/api-response.dto";
 import { TimezoneUtil } from "../../common/utils/timezone.util";
+import { LocationUtil } from "../../common/utils/location.util";
 
 @Injectable()
 export class PagesService {
@@ -35,6 +36,73 @@ export class PagesService {
     }
   }
 
+  async invalidatePageCache(key: string): Promise<void> {
+    try {
+      await this.redis.del(key);
+    } catch (err: any) {
+      this.logger.warn(`Failed to delete cache key ${key}: ${err.message}`);
+    }
+  }
+
+  async invalidateTemplePages(
+    templeId?: string,
+    ...pages: string[]
+  ): Promise<void> {
+    try {
+      const targetPages =
+        pages.length > 0
+          ? pages
+          : [
+              "home",
+              "about",
+              "darshan",
+              "puja",
+              "seva",
+              "events",
+              "prasad",
+              "accommodation",
+              "donations",
+              "overview",
+              "paath",
+              "gurukul",
+            ];
+
+      const keys: string[] = [];
+      if (templeId) {
+        for (const p of targetPages) {
+          keys.push(`page:${p}:${templeId}`);
+        }
+      } else {
+        for (const p of targetPages) {
+          let cursor = "0";
+          do {
+            const [nextCursor, foundKeys] = await this.redis.scan(
+              cursor,
+              "MATCH",
+              `page:${p}:*`,
+              "COUNT",
+              100,
+            );
+            cursor = nextCursor;
+            if (foundKeys && foundKeys.length > 0) {
+              keys.push(...foundKeys);
+            }
+          } while (cursor !== "0");
+        }
+      }
+
+      if (keys.length > 0) {
+        const uniqueKeys = Array.from(new Set(keys));
+        await this.redis.del(...uniqueKeys);
+        this.logger.log(
+          `Invalidated ${uniqueKeys.length} page cache keys: ${uniqueKeys.join(", ")}`,
+        );
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed to invalidate temple pages: ${err.message}`);
+    }
+  }
+
   private async resolveTemple(templeId?: string) {
     if (templeId) {
       const temple = await this.prisma.temple.findUnique({
@@ -56,9 +124,20 @@ export class PagesService {
   // ==========================================
   // 1. HOME PAGE AGGREGATION
   // ==========================================
-  async getHomePage(templeId?: string): Promise<ApiResponseDto<any>> {
+  async getHomePage(
+    templeId?: string,
+    userLat?: number,
+    userLng?: number,
+  ): Promise<ApiResponseDto<any>> {
     const temple = await this.resolveTemple(templeId);
-    const cacheKey = `page:home:${temple.id}`;
+    const distanceKm = LocationUtil.calculateDistanceKm(
+      userLat,
+      userLng,
+      temple.latitude,
+      temple.longitude,
+    );
+
+    const cacheKey = `page:home:${temple.id}:${userLat || "none"}:${userLng || "none"}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
       return ApiResponseDto.success(cached, {
@@ -179,6 +258,9 @@ export class PagesService {
         state: temple.state,
         country: temple.country,
         pincode: temple.pincode,
+        latitude: temple.latitude,
+        longitude: temple.longitude,
+        distanceKm,
         contactPhone: temple.contactPhone,
         contactEmail: temple.contactEmail,
         establishedYear: temple.establishedYear,
@@ -888,10 +970,20 @@ export class PagesService {
   // ==========================================
   // 10. TEMPLE OVERVIEW AGGREGATION
   // ==========================================
-  async getTempleOverview(templeId?: string): Promise<ApiResponseDto<any>> {
+  async getTempleOverview(
+    templeId?: string,
+    userLat?: number,
+    userLng?: number,
+  ): Promise<ApiResponseDto<any>> {
     const temple = await this.resolveTemple(templeId);
+    const distanceKm = LocationUtil.calculateDistanceKm(
+      userLat,
+      userLng,
+      temple.latitude,
+      temple.longitude,
+    );
 
-    const cacheKey = `page:overview:${temple.id}`;
+    const cacheKey = `page:overview:${temple.id}:${userLat || "none"}:${userLng || "none"}`;
     const cached = await this.getCached<any>(cacheKey);
     if (cached) {
       return ApiResponseDto.success(cached, {
@@ -943,6 +1035,7 @@ export class PagesService {
         pincode: temple.pincode,
         latitude: temple.latitude,
         longitude: temple.longitude,
+        distanceKm,
       },
       gallery: gallery.map((g) => ({
         id: g.id,
@@ -957,4 +1050,122 @@ export class PagesService {
       generatedAt: new Date().toISOString(),
     });
   }
+
+  // ==========================================
+  // 11. GURUKUL PAGE AGGREGATION
+  // ==========================================
+  async getGurukulPage(templeId?: string): Promise<ApiResponseDto<any>> {
+    const temple = await this.resolveTemple(templeId);
+    const cacheKey = `page:gurukul:${temple.id}`;
+    const cached = await this.getCached<any>(cacheKey);
+    if (cached) {
+      return ApiResponseDto.success(cached, { cached: true });
+    }
+
+    const gurukul = await this.prisma.gurukul.findFirst({
+      where: { isPublished: true },
+      include: {
+        schedules: {
+          where: { isActive: true },
+          orderBy: { displayOrder: "asc" },
+        },
+      },
+    });
+
+    const data = {
+      temple: { id: temple.id, name: temple.name },
+      gurukul: gurukul || {
+        name: "Shree Neelkantheshwar Mahadev Ved Vedang Gurukulam",
+        description: "Vedic Gurukul Institution",
+        schedules: [],
+      },
+    };
+
+    await this.setCached(cacheKey, data, 120);
+    return ApiResponseDto.success(data, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
+  }
+
+  // ==========================================
+  // 12. PAATH PAGE AGGREGATION
+  // ==========================================
+  async getPaathPage(
+    templeId?: string,
+    category?: string,
+  ): Promise<ApiResponseDto<any>> {
+    const temple = await this.resolveTemple(templeId);
+    const cacheKey = `page:paath:${temple.id}:${category || "all"}`;
+    const cached = await this.getCached<any>(cacheKey);
+    if (cached) {
+      return ApiResponseDto.success(cached, { cached: true });
+    }
+
+    const where: any = { isPublished: true };
+    if (category) where.category = category;
+
+    const [items, categories] = await Promise.all([
+      this.prisma.paath.findMany({
+        where,
+        orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+      }),
+      this.prisma.paath.findMany({
+        where: { isPublished: true },
+        select: { category: true },
+        distinct: ["category"],
+      }),
+    ]);
+
+    const data = {
+      temple: { id: temple.id, name: temple.name },
+      categories: categories.map((c) => c.category).filter(Boolean),
+      paathList: items,
+    };
+
+    await this.setCached(cacheKey, data, 120);
+    return ApiResponseDto.success(data, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
+  }
+
+  // ==========================================
+  // 13. MAHAPRASAD PAGE AGGREGATION
+  // ==========================================
+  async getMahaPrasadPage(
+    templeId?: string,
+    date?: string,
+  ): Promise<ApiResponseDto<any>> {
+    const temple = await this.resolveTemple(templeId);
+    const targetDate = date
+      ? TimezoneUtil.parseTempleDate(date)
+      : TimezoneUtil.startOfDay();
+
+    const slots = await this.prisma.mahaprasadSlot.findMany({
+      where: {
+        templeId: temple.id,
+        isActive: true,
+        date: { gte: targetDate },
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+      take: 20,
+    });
+
+    const data = {
+      temple: { id: temple.id, name: temple.name },
+      date: date || TimezoneUtil.formatDateForDb(new Date()),
+      slots: slots.map((s) => ({
+        ...s,
+        availableCapacity: Math.max(0, s.capacity - s.bookedCount),
+        isFull: s.bookedCount >= s.capacity,
+      })),
+    };
+
+    return ApiResponseDto.success(data, {
+      cached: false,
+      generatedAt: new Date().toISOString(),
+    });
+  }
 }
+

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -40,7 +41,7 @@ export class AartiService {
       data.dayOfWeek !== undefined &&
       (data.dayOfWeek < 0 || data.dayOfWeek > 6)
     ) {
-      throw new Error("dayOfWeek must be 0-6");
+      throw new BadRequestException("dayOfWeek must be between 0 and 6");
     }
 
     const aarti = await this.prisma.aartiSchedule.create({

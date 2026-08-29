@@ -1,9 +1,10 @@
-import { Module } from "@nestjs/common";
+import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
 
 import configuration from "./config/configuration";
 import { validationSchema } from "./config/validation";
+import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { RedisModule } from "./modules/redis/redis.module";
@@ -27,6 +28,10 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { QrModule } from "./modules/qr/qr.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { PagesModule } from "./modules/pages/pages.module";
+import { PaathModule } from "./modules/paath/paath.module";
+import { GurukulModule } from "./modules/gurukul/gurukul.module";
+import { MahaprasadModule } from "./modules/mahaprasad/mahaprasad.module";
+import { JigyasaModule } from "./modules/jigyasa/jigyasa.module";
 
 @Module({
   imports: [
@@ -39,6 +44,15 @@ import { PagesModule } from "./modules/pages/pages.module";
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.LOG_LEVEL || "info",
+        genReqId: (req: any) => req.id || req.headers?.["x-request-id"],
+        redact: [
+          "req.headers.authorization",
+          "req.headers['x-cashfree-signature']",
+          "req.headers['x-webhook-signature']",
+          "req.body.otp",
+          "req.body.refreshToken",
+          "req.body.password",
+        ],
         transport:
           process.env.NODE_ENV !== "production"
             ? { target: "pino-pretty" }
@@ -67,6 +81,14 @@ import { PagesModule } from "./modules/pages/pages.module";
     QrModule,
     AdminModule,
     PagesModule,
+    PaathModule,
+    GurukulModule,
+    MahaprasadModule,
+    JigyasaModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes("*");
+  }
+}

@@ -162,7 +162,9 @@ export class DarshanService {
     },
   ): Promise<ApiResponseDto<any>> {
     const { date, scheduleId, status, page = 1, limit = 50 } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 50);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = { status: status || "ACTIVE" };
     if (date) {
@@ -186,7 +188,7 @@ export class DarshanService {
       this.prisma.darshanSlot.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { date: "asc" },
         include: {
           schedule: { select: { name: true, startTime: true, endTime: true } },
@@ -203,8 +205,8 @@ export class DarshanService {
     }));
 
     return ApiResponseDto.success(
-      { slots: slotsWithAvail, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { slots: slotsWithAvail, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 

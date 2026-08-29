@@ -7,12 +7,20 @@ import {
 import { Role, AuditAction } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
+import { BookingService } from "../booking/booking.service";
+import { AccommodationService } from "../accommodation/accommodation.service";
+import { PrasadService } from "../prasad/prasad.service";
 import { ApiResponseDto } from "../../common/dto/api-response.dto";
 import { TimezoneUtil } from "../../common/utils/timezone.util";
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private bookingService: BookingService,
+    private accommodationService: AccommodationService,
+    private prasadService: PrasadService,
+  ) {}
 
   // ============== AUDIT LOGS ==============
 
@@ -36,7 +44,9 @@ export class AdminService {
       page = 1,
       limit = 50,
     } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 50);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = {};
     if (actorId) where.actorId = actorId;
@@ -53,15 +63,15 @@ export class AdminService {
       this.prisma.auditLog.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.auditLog.count({ where }),
     ]);
 
     return ApiResponseDto.success(
-      { logs, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { logs, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 
@@ -230,7 +240,9 @@ export class AdminService {
     },
   ): Promise<ApiResponseDto<any>> {
     const { from, to, page = 1, limit = 30 } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 30);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = { templeId };
     if (from || to) {
@@ -243,15 +255,15 @@ export class AdminService {
       this.prisma.crowdSnapshot.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { date: "desc" },
       }),
       this.prisma.crowdSnapshot.count({ where }),
     ]);
 
     return ApiResponseDto.success(
-      { snapshots, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { snapshots, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 
@@ -292,15 +304,19 @@ export class AdminService {
     role?: string;
     status?: string;
     search?: string;
+    isProfileComplete?: boolean;
     page?: number;
     limit?: number;
   }): Promise<ApiResponseDto<any>> {
-    const { role, status, search, page = 1, limit = 50 } = params;
-    const skip = (page - 1) * limit;
+    const { role, status, search, isProfileComplete, page = 1, limit = 50 } = params;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 50);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = {};
     if (role) where.role = role;
     if (status) where.status = status;
+    if (isProfileComplete !== undefined) where.isProfileComplete = isProfileComplete;
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -313,7 +329,7 @@ export class AdminService {
       this.prisma.user.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
@@ -323,6 +339,12 @@ export class AdminService {
           role: true,
           status: true,
           isVerified: true,
+          dateOfBirth: true,
+          gender: true,
+          emergencyContact: true,
+          latitude: true,
+          longitude: true,
+          isProfileComplete: true,
           createdAt: true,
           _count: {
             select: {
@@ -339,8 +361,8 @@ export class AdminService {
     ]);
 
     return ApiResponseDto.success(
-      { users, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { users, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 
@@ -550,4 +572,113 @@ export class AdminService {
 
     return ApiResponseDto.success(report);
   }
+
+  // ============== STAFF ASSIGNMENTS (MULTI-TEMPLE ISOLATION) ==============
+
+  async assignStaff(templeId: string, userId: string): Promise<ApiResponseDto<any>> {
+    const [temple, user] = await Promise.all([
+      this.prisma.temple.findUnique({ where: { id: templeId } }),
+      this.prisma.user.findUnique({ where: { id: userId } }),
+    ]);
+
+    if (!temple) throw new NotFoundException("Temple not found");
+    if (!user) throw new NotFoundException("User not found");
+
+    if (user.role === Role.DEVOTEE) {
+      throw new BadRequestException("Cannot assign DEVOTEE to staff role without upgrading user role first.");
+    }
+
+    const assignment = await this.prisma.staffAssignment.upsert({
+      where: {
+        userId_templeId: {
+          userId,
+          templeId,
+        },
+      },
+      update: {},
+      create: {
+        userId,
+        templeId,
+      },
+      include: {
+        user: { select: { id: true, name: true, phone: true, email: true, role: true } },
+        temple: { select: { id: true, name: true } },
+      },
+    });
+
+    return ApiResponseDto.success(assignment, { message: "Staff assigned to temple successfully" });
+  }
+
+  async removeStaff(templeId: string, userId: string): Promise<ApiResponseDto<any>> {
+    const existing = await this.prisma.staffAssignment.findUnique({
+      where: {
+        userId_templeId: {
+          userId,
+          templeId,
+        },
+      },
+    });
+
+    if (!existing) {
+      throw new NotFoundException("Staff assignment not found for this temple");
+    }
+
+    await this.prisma.staffAssignment.delete({
+      where: {
+        userId_templeId: {
+          userId,
+          templeId,
+        },
+      },
+    });
+
+    return ApiResponseDto.success({ removed: true, userId, templeId });
+  }
+
+  async getTempleStaff(templeId: string): Promise<ApiResponseDto<any>> {
+    const temple = await this.prisma.temple.findUnique({ where: { id: templeId } });
+    if (!temple) throw new NotFoundException("Temple not found");
+
+    const assignments = await this.prisma.staffAssignment.findMany({
+      where: { templeId },
+      include: {
+        user: { select: { id: true, name: true, phone: true, email: true, role: true, status: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return ApiResponseDto.success(assignments);
+  }
+
+  async getUserTemples(userId: string): Promise<ApiResponseDto<any>> {
+    const assignments = await this.prisma.staffAssignment.findMany({
+      where: { userId },
+      include: {
+        temple: { select: { id: true, name: true, city: true, state: true, status: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return ApiResponseDto.success(assignments.map((a) => a.temple));
+  }
+
+  // ============== RESERVATION CLEANUP ==============
+
+  async cleanupExpiredReservations(olderThanMinutes = 30): Promise<ApiResponseDto<any>> {
+    const [expiredBookings, expiredAccommodations, expiredPrasad] = await Promise.all([
+      this.bookingService.expirePendingBookings(olderThanMinutes),
+      this.accommodationService.expirePendingBookings(olderThanMinutes),
+      this.prasadService.expirePendingOrders(olderThanMinutes),
+    ]);
+
+    return ApiResponseDto.success({
+      expiredBookings,
+      expiredAccommodations,
+      expiredPrasad,
+      totalCleaned: expiredBookings + expiredAccommodations + expiredPrasad,
+      cutoffMinutes: olderThanMinutes,
+      cleanedAt: new Date().toISOString(),
+    });
+  }
 }
+

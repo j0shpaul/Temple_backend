@@ -8,24 +8,46 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { RedisService } from "../redis/redis.service";
 
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+
+@ApiTags("Health")
 @Controller("health")
 export class HealthController {
   constructor(
-    private health: HealthCheckService,
+    private healthCheck: HealthCheckService,
     private prisma: PrismaService,
     private redis: RedisService,
   ) {}
 
   @Get()
   @HealthCheck()
+  @ApiOperation({ summary: "System health check (App, DB & Redis)" })
+  @ApiResponse({ status: 200, description: "System status health report" })
+  health(): Promise<HealthCheckResult> {
+    return this.healthCheck.check([
+      this.appIndicator(),
+      this.databaseIndicator(),
+      this.redisIndicator(),
+    ]);
+  }
+
+  @Get("live")
+  @HealthCheck()
+  @ApiOperation({ summary: "Application liveness probe" })
+  @ApiResponse({ status: 200, description: "Application liveness status" })
   liveness(): Promise<HealthCheckResult> {
-    return this.health.check([this.appIndicator()]);
+    return this.healthCheck.check([this.appIndicator()]);
   }
 
   @Get("ready")
   @HealthCheck()
+  @ApiOperation({ summary: "Database and Redis readiness probe" })
+  @ApiResponse({ status: 200, description: "Infrastructure readiness status" })
   async readiness(): Promise<HealthCheckResult> {
-    return this.health.check([this.databaseIndicator(), this.redisIndicator()]);
+    return this.healthCheck.check([
+      this.databaseIndicator(),
+      this.redisIndicator(),
+    ]);
   }
 
   private appIndicator(): HealthIndicatorFunction {

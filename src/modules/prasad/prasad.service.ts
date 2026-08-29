@@ -8,14 +8,14 @@ import {
 
 import { PrismaService } from "../prisma/prisma.service";
 import { ApiResponseDto } from "../../common/dto/api-response.dto";
-import { RazorpayService } from "../payments/razorpay.service";
+import { PaymentService } from "../payments/payment.service";
 import { IdUtil } from "../../common/utils/id.util";
 
 @Injectable()
 export class PrasadService {
   constructor(
     private prisma: PrismaService,
-    private razorpay: RazorpayService,
+    private paymentService: PaymentService,
   ) {}
 
   // ============== PRODUCT MANAGEMENT ==============
@@ -143,6 +143,44 @@ export class PrasadService {
     return ApiResponseDto.success(updated);
   }
 
+  async updateStock(
+    id: string,
+    quantity: number,
+    mode: "SET" | "INCREMENT" | "DECREMENT",
+    actorRole: string,
+  ): Promise<ApiResponseDto<any>> {
+    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole)) {
+      throw new ForbiddenException("Insufficient permissions");
+    }
+
+    const product = await this.prisma.prasadProduct.findUnique({
+      where: { id },
+    });
+    if (!product) throw new NotFoundException("Product not found");
+
+    let newStock = product.stock;
+    if (mode === "SET") {
+      newStock = quantity;
+    } else if (mode === "INCREMENT") {
+      newStock = product.stock + quantity;
+    } else if (mode === "DECREMENT") {
+      newStock = product.stock - quantity;
+    } else {
+      throw new BadRequestException("Invalid stock update mode");
+    }
+
+    if (newStock < product.reservedStock) {
+      throw new ConflictException("Cannot reduce stock below reserved amount");
+    }
+
+    const updated = await this.prisma.prasadProduct.update({
+      where: { id },
+      data: { stock: newStock },
+    });
+
+    return ApiResponseDto.success(updated);
+  }
+
   async deleteProduct(
     id: string,
     actorRole: string,
@@ -209,7 +247,7 @@ export class PrasadService {
     if (!data.items?.length)
       throw new BadRequestException("Order must have at least one item");
 
-    return this.prisma.$transaction(async (tx) => {
+    const order = await this.prisma.$transaction(async (tx) => {
       const address = await tx.address.findFirst({
         where: { id: data.addressId, userId },
       });
@@ -228,12 +266,27 @@ export class PrasadService {
         if (!product || product.templeId !== data.templeId) {
           throw new NotFoundException(`Product ${item.productId} not found`);
         }
-        if (!product.isActive)
-          throw new BadRequestException(
-            `Product ${product.name} is not available`,
-          );
         if (product.stock - product.reservedStock < item.quantity) {
           throw new ConflictException(`Insufficient stock for ${product.name}`);
+        }
+
+        // Atomically reserve stock with row-level conditional locking
+        if (typeof (tx as any).$executeRaw === "function") {
+          const result = await tx.$executeRaw`
+            UPDATE "PrasadProduct"
+            SET "reservedStock" = "reservedStock" + ${item.quantity}
+            WHERE "id" = ${product.id}
+              AND "isActive" = true
+              AND ("stock" - "reservedStock") >= ${item.quantity}
+          `;
+          if (result === 0) {
+            throw new ConflictException(`Insufficient stock for ${product.name}`);
+          }
+        } else {
+          await tx.prasadProduct.update({
+            where: { id: product.id },
+            data: { reservedStock: { increment: item.quantity } },
+          });
         }
 
         const lineTotal = product.pricePaise * item.quantity;
@@ -246,19 +299,13 @@ export class PrasadService {
           quantity: item.quantity,
           lineTotalPaise: lineTotal,
         });
-
-        // Atomically reserve stock
-        await tx.prasadProduct.update({
-          where: { id: product.id },
-          data: { reservedStock: { increment: item.quantity } },
-        });
       }
 
       const deliveryPaise = data.deliveryPaise ?? 0;
       const totalPaise = subtotalPaise + deliveryPaise;
       const reference = IdUtil.generateOrderReference();
 
-      const order = await tx.prasadOrder.create({
+      return tx.prasadOrder.create({
         data: {
           userId,
           templeId: data.templeId,
@@ -272,46 +319,29 @@ export class PrasadService {
         },
         include: { items: true, address: true },
       });
-
-      // Create Razorpay order if there's an amount
-      if (totalPaise > 0) {
-        const razorpayOrder = await this.razorpay.createOrder({
-          amount: totalPaise,
-          currency: "INR",
-          receipt: IdUtil.generateReceiptNumber(),
-          notes: { orderId: order.id, reference },
-        });
-
-        await tx.payment.create({
-          data: {
-            prasadOrderId: order.id,
-            entityType: "PRASAD_ORDER",
-            userId,
-            amountPaise: totalPaise,
-            currency: "INR",
-            status: "PENDING",
-            razorpayOrderId: razorpayOrder.id,
-            description: `Prasad order: ${reference}`,
-          },
-        });
-
-        return ApiResponseDto.success({
-          order,
-          razorpayOrderId: razorpayOrder.id,
-          amountPaise: totalPaise,
-          keyId: this.razorpay.getKeyId(),
-        });
-      }
-
-      return ApiResponseDto.success({ order });
     });
+
+    // Create payment via central PaymentService if there's an amount
+    if (order.totalPaise > 0) {
+      const paymentResult =
+        await this.paymentService.createPaymentForPrasadOrder(order.id, userId);
+
+      return ApiResponseDto.success({
+        order,
+        orderId: order.id,
+        paymentId: paymentResult.data?.paymentId,
+        cfOrderId: paymentResult.data?.cfOrderId,
+        paymentSessionId: paymentResult.data?.paymentSessionId,
+        amountPaise: order.totalPaise,
+        gateway: "CASHFREE",
+      });
+    }
+
+    return ApiResponseDto.success({ order });
   }
 
   async verifyOrderPayment(data: {
     orderId: string;
-    razorpayOrderId: string;
-    razorpayPaymentId: string;
-    razorpaySignature: string;
   }): Promise<ApiResponseDto<any>> {
     const order = await this.prisma.prasadOrder.findUnique({
       where: { id: data.orderId },
@@ -322,61 +352,8 @@ export class PrasadService {
       where: { prasadOrderId: data.orderId },
     });
     if (!payment) throw new NotFoundException("Payment not found");
-    if (payment.status === "SUCCESS") {
-      throw new BadRequestException("Order already paid");
-    }
 
-    const isValid = await this.razorpay.verifyPayment(
-      data.razorpayOrderId,
-      data.razorpayPaymentId,
-      data.razorpaySignature,
-    );
-    if (!isValid) throw new BadRequestException("Invalid payment signature");
-
-    const result = await this.prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: "SUCCESS",
-          razorpayPaymentId: data.razorpayPaymentId,
-          razorpaySignature: data.razorpaySignature,
-          paidAt: new Date(),
-        },
-      });
-
-      // Reduce actual stock and clear reservation
-      const items = await tx.prasadOrderItem.findMany({
-        where: { orderId: data.orderId },
-      });
-      for (const item of items) {
-        await tx.prasadProduct.update({
-          where: { id: item.productId },
-          data: {
-            stock: { decrement: item.quantity },
-            reservedStock: { decrement: item.quantity },
-          },
-        });
-      }
-
-      const updatedOrder = await tx.prasadOrder.update({
-        where: { id: data.orderId },
-        data: { status: "CONFIRMED" },
-      });
-
-      await tx.paymentEvent.create({
-        data: {
-          paymentId: payment.id,
-          eventType: "PAYMENT_CAPTURED",
-          status: "SUCCESS",
-          amountPaise: payment.amountPaise,
-          payload: data as any,
-        },
-      });
-
-      return updatedOrder;
-    });
-
-    return ApiResponseDto.success(result);
+    return this.paymentService.reconcilePayment(payment.id);
   }
 
   async getOrderById(
@@ -413,20 +390,23 @@ export class PrasadService {
 
   async getUserOrders(
     userId: string,
-    params: { page?: number; limit?: number },
+    params: { status?: string; page?: number; limit?: number },
   ): Promise<ApiResponseDto<any>> {
-    const { page = 1, limit = 20 } = params;
+    const { status, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
+
+    const where: any = { userId };
+    if (status) where.status = status as any;
 
     const [orders, total] = await Promise.all([
       this.prisma.prasadOrder.findMany({
-        where: { userId },
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
         include: { items: true, temple: { select: { id: true, name: true } } },
       }),
-      this.prisma.prasadOrder.count({ where: { userId } }),
+      this.prisma.prasadOrder.count({ where }),
     ]);
 
     return ApiResponseDto.success(
@@ -497,5 +477,57 @@ export class PrasadService {
       data: { status: status as any },
     });
     return ApiResponseDto.success(order);
+  }
+
+  // ============== ABANDONED ORDER EXPIRATION ==============
+
+  async expirePendingOrders(olderThanMinutes = 30): Promise<number> {
+    const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+    const expired = await this.prisma.prasadOrder.findMany({
+      where: {
+        status: "PLACED",
+        createdAt: { lt: cutoff },
+      },
+      include: { items: true, payment: true },
+    });
+
+    let count = 0;
+    for (const rawOrder of expired) {
+      const order = rawOrder as any;
+      if (order.payment?.status === "SUCCESS") continue;
+
+      await this.prisma.$transaction(async (tx) => {
+        const current = await tx.prasadOrder.findUnique({
+          where: { id: order.id },
+          include: { payment: true },
+        });
+        if (!current || current.status !== "PLACED" || (current as any).payment?.status === "SUCCESS") {
+          return;
+        }
+
+        await tx.prasadOrder.update({
+          where: { id: order.id },
+          data: { status: "CANCELLED" },
+        });
+
+        // Release reserved inventory
+        for (const item of order.items) {
+          await tx.prasadProduct.updateMany({
+            where: { id: item.productId, reservedStock: { gte: item.quantity } },
+            data: { reservedStock: { decrement: item.quantity } },
+          });
+        }
+
+        if (order.payment?.id && order.payment.status === "PENDING") {
+          await tx.payment.update({
+            where: { id: order.payment.id },
+            data: { status: "CANCELLED" },
+          });
+        }
+
+        count++;
+      });
+    }
+    return count;
   }
 }

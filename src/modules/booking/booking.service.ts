@@ -287,7 +287,9 @@ export class BookingService {
     },
   ): Promise<ApiResponseDto<any>> {
     const { status, page = 1, limit = 20 } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 20);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = { userId };
     if (status) where.status = status;
@@ -296,7 +298,7 @@ export class BookingService {
       this.prisma.booking.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: "desc" },
         include: {
           payment: {
@@ -309,8 +311,8 @@ export class BookingService {
     ]);
 
     return ApiResponseDto.success(
-      { bookings, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { bookings, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 
@@ -325,7 +327,9 @@ export class BookingService {
     },
   ): Promise<ApiResponseDto<any>> {
     const { status, bookingType, date, page = 1, limit = 50 } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 50);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = { templeId };
     if (status) where.status = status;
@@ -339,7 +343,7 @@ export class BookingService {
       this.prisma.booking.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: "desc" },
         include: {
           payment: { select: { id: true, status: true } },
@@ -350,8 +354,8 @@ export class BookingService {
     ]);
 
     return ApiResponseDto.success(
-      { bookings, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { bookings, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 
@@ -492,5 +496,68 @@ export class BookingService {
       quantity: booking.quantity,
       attendees: booking.attendees,
     });
+  }
+
+  // ============== ABANDONED RESERVATION EXPIRATION ==============
+
+  async expirePendingBookings(olderThanMinutes = 30): Promise<number> {
+    const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+    const expiredBookings = await this.prisma.booking.findMany({
+      where: {
+        status: "PENDING_PAYMENT",
+        createdAt: { lt: cutoff },
+      },
+      include: { payment: true },
+    });
+
+    let count = 0;
+    for (const rawBooking of expiredBookings) {
+      const booking = rawBooking as any;
+      if (booking.payment?.status === "SUCCESS") continue;
+
+      await this.prisma.$transaction(async (tx) => {
+        const current = await tx.booking.findUnique({
+          where: { id: booking.id },
+          include: { payment: true },
+        });
+        if (!current || current.status !== "PENDING_PAYMENT" || (current as any).payment?.status === "SUCCESS") {
+          return;
+        }
+
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: {
+            status: "CANCELLED",
+            cancelledAt: new Date(),
+            cancelledReason: "PAYMENT_TIMEOUT",
+          },
+        });
+
+        // Release slot capacity
+        if (booking.slotId) {
+          if (booking.bookingType === "PUJA") {
+            await tx.pujaSlot.updateMany({
+              where: { id: booking.slotId, bookedCount: { gte: booking.quantity } },
+              data: { bookedCount: { decrement: booking.quantity } },
+            });
+          } else if (booking.bookingType === "SEVA") {
+            await tx.sevaSlot.updateMany({
+              where: { id: booking.slotId, bookedCount: { gte: booking.quantity } },
+              data: { bookedCount: { decrement: booking.quantity } },
+            });
+          }
+        }
+
+        if (booking.payment?.id && booking.payment.status === "PENDING") {
+          await tx.payment.update({
+            where: { id: booking.payment.id },
+            data: { status: "CANCELLED" },
+          });
+        }
+
+        count++;
+      });
+    }
+    return count;
   }
 }

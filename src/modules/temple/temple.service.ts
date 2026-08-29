@@ -54,7 +54,9 @@ export class TempleService {
     search?: string;
   }): Promise<ApiResponseDto<any>> {
     const { page = 1, limit = 20, status, search } = params;
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 20);
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = {};
     if (status) where.status = status;
@@ -70,15 +72,15 @@ export class TempleService {
       this.prisma.temple.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.temple.count({ where }),
     ]);
 
     return ApiResponseDto.success(
-      { temples, total, page, limit },
-      { totalPages: Math.ceil(total / limit) },
+      { temples, total, page: pageNum, limit: limitNum },
+      { totalPages: Math.ceil(total / limitNum) },
     );
   }
 

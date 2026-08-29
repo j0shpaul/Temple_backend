@@ -2,8 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
-  Delete,
   Param,
   Body,
   Query,
@@ -11,17 +9,21 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  Headers,
 } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
   ApiQuery,
+  ApiResponse,
 } from "@nestjs/swagger";
 
 import { PaymentService } from "./payment.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { RateLimitGuard } from "../../common/guards/rate-limit.guard";
+import { RateLimit } from "../../common/decorators/rate-limit.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -31,9 +33,10 @@ export class PaymentController {
   constructor(private paymentService: PaymentService) {}
 
   @Post("booking/:bookingId")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RateLimitGuard)
+  @RateLimit({ points: 10, durationSeconds: 60, failClosed: true })
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Create Razorpay order for booking" })
+  @ApiOperation({ summary: "Create Cashfree payment order for booking" })
   async createBookingPayment(
     @Param("bookingId") bookingId: string,
     @CurrentUser() user: any,
@@ -41,28 +44,30 @@ export class PaymentController {
     return this.paymentService.createPaymentForBooking(bookingId, user.id);
   }
 
-  @Post("verify")
-  @UseGuards(JwtAuthGuard)
+  @Get(":id/status")
+  @UseGuards(JwtAuthGuard, RateLimitGuard)
+  @RateLimit({ points: 20, durationSeconds: 60, failClosed: false })
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Verify payment and confirm booking" })
-  async verifyPayment(
-    @Body()
-    data: {
-      bookingId: string;
-      razorpayOrderId: string;
-      razorpayPaymentId: string;
-      razorpaySignature: string;
-    },
+  @ApiOperation({
+    summary: "Reconcile / check authoritative payment status from gateway",
+  })
+  async getPaymentStatus(
+    @Param("id") id: string,
     @CurrentUser() user: any,
   ) {
-    return this.paymentService.verifyPayment(data);
+    return this.paymentService.reconcilePayment(id, user.id, user.role);
   }
 
   @Post("webhook")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Razorpay webhook handler (public, no auth)" })
-  async handleWebhook(@Req() req: any) {
-    return this.paymentService.handleWebhook(req.body);
+  @ApiOperation({
+    summary: "Cashfree webhook handler (public, signature-verified)",
+  })
+  async handleWebhook(
+    @Req() req: any,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+  ) {
+    return this.paymentService.handleWebhook(req.body, headers);
   }
 
   @Get("me")
@@ -91,7 +96,7 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Refund payment (staff+)" })
+  @ApiOperation({ summary: "Refund payment (admin/manager only)" })
   async refund(
     @Param("id") id: string,
     @Body() data: { amountPaise?: number },

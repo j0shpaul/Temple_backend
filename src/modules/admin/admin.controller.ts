@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Param,
   Body,
   Query,
@@ -20,6 +21,7 @@ import {
 import { AdminService } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { TempleAccessGuard } from "../../common/guards/temple-access.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
@@ -87,7 +89,7 @@ export class AdminController {
   // ============== CROWD STATUS ==============
 
   @Get("temples/:templeId/crowd")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get crowd status for temple (staff+)" })
@@ -96,7 +98,7 @@ export class AdminController {
   }
 
   @Get("temples/:templeId/crowd/history")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get crowd history for temple (staff+)" })
@@ -130,7 +132,7 @@ export class AdminController {
   }
 
   @Post("temples/:templeId/crowd/snapshot")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Record crowd snapshot (manager+)" })
@@ -159,16 +161,28 @@ export class AdminController {
   @ApiQuery({ name: "role", required: false, type: String })
   @ApiQuery({ name: "status", required: false, type: String })
   @ApiQuery({ name: "search", required: false, type: String })
+  @ApiQuery({ name: "isProfileComplete", required: false, type: Boolean })
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "limit", required: false, type: Number })
   async listUsers(
     @Query("role") role?: string,
     @Query("status") status?: string,
     @Query("search") search?: string,
+    @Query("isProfileComplete") isProfileComplete?: boolean,
     @Query("page") page?: number,
     @Query("limit") limit?: number,
   ) {
-    return this.adminService.listUsers({ role, status, search, page, limit });
+    return this.adminService.listUsers({
+      role,
+      status,
+      search,
+      isProfileComplete:
+        isProfileComplete !== undefined
+          ? String(isProfileComplete) === "true"
+          : undefined,
+      page,
+      limit,
+    });
   }
 
   @Get("users/:id")
@@ -209,7 +223,7 @@ export class AdminController {
   // ============== STATS & REPORTS ==============
 
   @Get("temples/:templeId/dashboard")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get dashboard stats for temple (manager+)" })
@@ -218,7 +232,7 @@ export class AdminController {
   }
 
   @Get("temples/:templeId/revenue")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get revenue report for temple (manager+)" })
@@ -247,5 +261,63 @@ export class AdminController {
     @Query("groupBy") groupBy?: "day" | "week" | "month",
   ) {
     return this.adminService.getRevenueReport(templeId, { from, to, groupBy });
+  }
+
+  // ============== RESERVATION CLEANUP ==============
+
+  @Post("cleanup-expired-reservations")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN", "SUPER_ADMIN")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Release abandoned PENDING_PAYMENT reservations" })
+  @ApiQuery({ name: "olderThanMinutes", required: false, type: Number })
+  async cleanupExpiredReservations(
+    @Query("olderThanMinutes") olderThanMinutes?: number,
+  ) {
+    return this.adminService.cleanupExpiredReservations(olderThanMinutes ? Number(olderThanMinutes) : 30);
+  }
+
+  // ============== STAFF ASSIGNMENTS (MULTI-TEMPLE ISOLATION) ==============
+
+  @Post("temples/:templeId/staff")
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
+  @Roles("ADMIN", "SUPER_ADMIN")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Assign staff/manager to a temple" })
+  async assignStaff(
+    @Param("templeId") templeId: string,
+    @Body() data: { userId: string },
+  ) {
+    return this.adminService.assignStaff(templeId, data.userId);
+  }
+
+  @Delete("temples/:templeId/staff/:userId")
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
+  @Roles("ADMIN", "SUPER_ADMIN")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Remove staff/manager from a temple" })
+  async removeStaff(
+    @Param("templeId") templeId: string,
+    @Param("userId") userId: string,
+  ) {
+    return this.adminService.removeStaff(templeId, userId);
+  }
+
+  @Get("temples/:templeId/staff")
+  @UseGuards(JwtAuthGuard, RolesGuard, TempleAccessGuard)
+  @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "List staff assigned to a temple" })
+  async getTempleStaff(@Param("templeId") templeId: string) {
+    return this.adminService.getTempleStaff(templeId);
+  }
+
+  @Get("users/:userId/temples")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN", "SUPER_ADMIN")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "List temples assigned to a user" })
+  async getUserTemples(@Param("userId") userId: string) {
+    return this.adminService.getUserTemples(userId);
   }
 }

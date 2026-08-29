@@ -9,7 +9,7 @@ import { RoomStatus, AccommodationStatus } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
 import { ApiResponseDto } from "../../common/dto/api-response.dto";
-import { RazorpayService } from "../payments/razorpay.service";
+import { CashfreeService } from "../payments/cashfree.service";
 import { TimezoneUtil } from "../../common/utils/timezone.util";
 import { IdUtil } from "../../common/utils/id.util";
 
@@ -17,7 +17,7 @@ import { IdUtil } from "../../common/utils/id.util";
 export class AccommodationService {
   constructor(
     private prisma: PrismaService,
-    private razorpay: RazorpayService,
+    private cashfree: CashfreeService,
   ) {}
 
   // ============== ROOM MANAGEMENT ==============
@@ -123,14 +123,18 @@ export class AccommodationService {
     templeId: string,
     checkIn: string,
     checkOut: string,
+    type?: string,
   ): Promise<ApiResponseDto<any>> {
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
     if (checkOutDate <= checkInDate)
       throw new BadRequestException("Check-out must be after check-in");
 
+    const where: any = { templeId, status: "AVAILABLE" };
+    if (type) where.type = type;
+
     const rooms = await this.prisma.room.findMany({
-      where: { templeId, status: "AVAILABLE" },
+      where,
       include: {
         bookings: {
           where: {
@@ -190,11 +194,11 @@ export class AccommodationService {
       if (data.guests > room.capacity)
         throw new BadRequestException(`Room capacity is ${room.capacity}`);
 
-      // Check for overlapping bookings
+      // Check for overlapping bookings (including active checkout holds)
       const overlapping = await tx.accommodationBooking.findFirst({
         where: {
           roomId: data.roomId,
-          status: { in: ["CONFIRMED", "CHECKED_IN"] },
+          status: { in: ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"] },
           OR: [
             { checkIn: { lt: checkOutDate }, checkOut: { gt: checkInDate } },
           ],
@@ -225,12 +229,16 @@ export class AccommodationService {
         include: { room: true, user: { select: { id: true, name: true } } },
       });
 
-      // Create Razorpay order
-      const order = await this.razorpay.createOrder({
+      const cfOrderId = `ACC_${reference}_${Date.now().toString(36).toUpperCase()}`;
+
+      // Create Cashfree order
+      const cfOrder = await this.cashfree.createOrder({
+        orderId: cfOrderId,
         amount: amountPaise,
         currency: "INR",
-        receipt: IdUtil.generateReceiptNumber(),
-        notes: { bookingId: booking.id, reference },
+        customerId: userId,
+        customerName: (booking as any).user?.name || "Devotee",
+        orderNote: `Accommodation booking: ${reference}`,
       });
 
       await tx.payment.create({
@@ -241,25 +249,24 @@ export class AccommodationService {
           amountPaise,
           currency: "INR",
           status: "PENDING",
-          razorpayOrderId: order.id,
+          gateway: "CASHFREE",
+          razorpayOrderId: cfOrder.orderId,
           description: `Accommodation booking: ${reference}`,
         },
       });
 
       return ApiResponseDto.success({
         booking,
-        razorpayOrderId: order.id,
+        orderId: cfOrder.orderId,
+        paymentSessionId: cfOrder.paymentSessionId,
         amountPaise,
-        keyId: this.razorpay.getKeyId(),
+        gateway: "CASHFREE",
       });
     });
   }
 
   async verifyBookingPayment(data: {
     bookingId: string;
-    razorpayOrderId: string;
-    razorpayPaymentId: string;
-    razorpaySignature: string;
   }): Promise<ApiResponseDto<any>> {
     const booking = await this.prisma.accommodationBooking.findUnique({
       where: { id: data.bookingId },
@@ -274,43 +281,53 @@ export class AccommodationService {
       throw new BadRequestException("Booking already paid");
     }
 
-    const isValid = await this.razorpay.verifyPayment(
-      data.razorpayOrderId,
-      data.razorpayPaymentId,
-      data.razorpaySignature,
+    const orderStatus = await this.cashfree.fetchOrderStatus(
+      payment.razorpayOrderId || payment.id,
     );
-    if (!isValid) throw new BadRequestException("Invalid payment signature");
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: "SUCCESS",
-          razorpayPaymentId: data.razorpayPaymentId,
-          razorpaySignature: data.razorpaySignature,
-          paidAt: new Date(),
-        },
+    const isSuccess =
+      orderStatus.orderStatus?.toUpperCase() === "PAID" ||
+      orderStatus.payments?.some((p) => p.status?.toUpperCase() === "SUCCESS");
+
+    if (isSuccess) {
+      const result = await this.prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: "SUCCESS",
+            paidAt: new Date(),
+          },
+        });
+
+        const updatedBooking = await tx.accommodationBooking.update({
+          where: { id: data.bookingId },
+          data: {
+            status: "CONFIRMED",
+            qrToken: IdUtil.generateQRToken(),
+          },
+        });
+
+        await tx.paymentEvent.create({
+          data: {
+            paymentId: payment.id,
+            eventType: "PAYMENT_CAPTURED",
+            status: "SUCCESS",
+            amountPaise: payment.amountPaise,
+            payload: orderStatus as any,
+          },
+        });
+
+        return updatedBooking;
       });
 
-      const updatedBooking = await tx.accommodationBooking.update({
-        where: { id: data.bookingId },
-        data: { status: "CONFIRMED" },
-      });
+      return ApiResponseDto.success(result);
+    }
 
-      await tx.paymentEvent.create({
-        data: {
-          paymentId: payment.id,
-          eventType: "PAYMENT_CAPTURED",
-          status: "SUCCESS",
-          amountPaise: payment.amountPaise,
-          payload: data as any,
-        },
-      });
-
-      return updatedBooking;
+    return ApiResponseDto.success({
+      bookingId: booking.id,
+      status: payment.status,
+      message: "Payment verification pending",
     });
-
-    return ApiResponseDto.success(result);
   }
 
   async getBookingById(
@@ -344,20 +361,23 @@ export class AccommodationService {
 
   async getUserBookings(
     userId: string,
-    params: { page?: number; limit?: number },
+    params: { status?: string; page?: number; limit?: number },
   ): Promise<ApiResponseDto<any>> {
-    const { page = 1, limit = 20 } = params;
+    const { status, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
+
+    const where: any = { userId };
+    if (status) where.status = status as any;
 
     const [bookings, total] = await Promise.all([
       this.prisma.accommodationBooking.findMany({
-        where: { userId },
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
         include: { room: true, temple: { select: { id: true, name: true } } },
       }),
-      this.prisma.accommodationBooking.count({ where: { userId } }),
+      this.prisma.accommodationBooking.count({ where }),
     ]);
 
     return ApiResponseDto.success(
@@ -467,5 +487,49 @@ export class AccommodationService {
     });
 
     return ApiResponseDto.success(updated);
+  }
+
+  // ============== ABANDONED RESERVATION EXPIRATION ==============
+
+  async expirePendingBookings(olderThanMinutes = 30): Promise<number> {
+    const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+    const expired = await this.prisma.accommodationBooking.findMany({
+      where: {
+        status: "PENDING_PAYMENT",
+        createdAt: { lt: cutoff },
+      },
+      include: { payment: true },
+    });
+
+    let count = 0;
+    for (const rawB of expired) {
+      const b = rawB as any;
+      if (b.payment?.status === "SUCCESS") continue;
+
+      await this.prisma.$transaction(async (tx) => {
+        const current = await tx.accommodationBooking.findUnique({
+          where: { id: b.id },
+          include: { payment: true },
+        });
+        if (!current || current.status !== "PENDING_PAYMENT" || (current as any).payment?.status === "SUCCESS") {
+          return;
+        }
+
+        await tx.accommodationBooking.update({
+          where: { id: b.id },
+          data: { status: "CANCELLED" },
+        });
+
+        if (b.payment?.id && b.payment.status === "PENDING") {
+          await tx.payment.update({
+            where: { id: b.payment.id },
+            data: { status: "CANCELLED" },
+          });
+        }
+
+        count++;
+      });
+    }
+    return count;
   }
 }
