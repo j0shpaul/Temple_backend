@@ -14,7 +14,8 @@ describe("JigyasaService", () => {
     askerPhone: "+919876543210",
     question: "What is the spiritual significance of lighting a Diya?",
     category: "Rituals & Traditions",
-    answer: "Lighting a Diya symbolizes removing darkness of ignorance with the light of knowledge.",
+    answer:
+      "Lighting a Diya symbolizes removing darkness of ignorance with the light of knowledge.",
     answeredBy: "Temple Scholar",
     answeredAt: new Date(),
     status: "ANSWERED",

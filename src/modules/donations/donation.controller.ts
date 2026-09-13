@@ -85,7 +85,11 @@ export class DonationController {
     @Body() data: any,
     @CurrentUser() user: any,
   ) {
-    return this.donationService.createDonation(user.id, { ...data, templeId }, user.role);
+    return this.donationService.createDonation(
+      user.id,
+      { ...data, templeId },
+      user.role,
+    );
   }
 
   @Post("verify")

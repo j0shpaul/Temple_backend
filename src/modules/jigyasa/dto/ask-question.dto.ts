@@ -16,7 +16,8 @@ export class AskQuestionDto {
   askerPhone?: string;
 
   @ApiProperty({
-    example: "What is the spiritual significance of lighting a Diya in the evening?",
+    example:
+      "What is the spiritual significance of lighting a Diya in the evening?",
   })
   @IsString()
   @IsNotEmpty()

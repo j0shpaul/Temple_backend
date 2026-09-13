@@ -151,8 +151,12 @@ export class JigyasaService {
     actorName?: string,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
-      throw new ForbiddenException("Insufficient permissions to answer questions");
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
+      throw new ForbiddenException(
+        "Insufficient permissions to answer questions",
+      );
     }
 
     const existing = await this.prisma.jigyasa.findUnique({ where: { id } });
@@ -177,7 +181,9 @@ export class JigyasaService {
     isPublic: boolean,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 
@@ -196,7 +202,9 @@ export class JigyasaService {
     id: string,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 

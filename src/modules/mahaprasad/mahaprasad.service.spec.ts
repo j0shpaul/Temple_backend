@@ -133,7 +133,9 @@ describe("MahaprasadService", () => {
     it("should throw ConflictException if capacity exceeded (User A books 6, User B tries 5 on capacity 10)", async () => {
       // Slot capacity 10, already booked 6 (remaining 4)
       const partiallyBookedSlot = { ...mockSlot, bookedCount: 6 };
-      mockPrisma.mahaprasadSlot.findUnique.mockResolvedValue(partiallyBookedSlot);
+      mockPrisma.mahaprasadSlot.findUnique.mockResolvedValue(
+        partiallyBookedSlot,
+      );
       // Atomic update fails (0 rows updated)
       mockPrisma.mahaprasadSlot.updateMany.mockResolvedValue({ count: 0 });
 

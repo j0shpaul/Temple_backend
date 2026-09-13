@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
+import { RedisService } from '../src/modules/redis/redis.service';
 import { ValidationPipe as CustomValidationPipe } from '../src/common/pipes/validation.pipe';
 import {
   HttpExceptionFilter,
@@ -11,6 +12,7 @@ import { PrismaExceptionFilter } from '../src/common/filters/prisma-exception.fi
 
 let app: INestApplication;
 let prisma: PrismaService;
+let redis: RedisService;
 
 beforeAll(async () => {
   const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -29,6 +31,17 @@ beforeAll(async () => {
   await app.init();
 
   prisma = moduleFixture.get<PrismaService>(PrismaService);
+  redis = moduleFixture.get<RedisService>(RedisService);
+
+  // Clear stale rate limit and OTP keys for test isolation
+  try {
+    const keys = await redis.keys('*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  } catch (e) {
+    // Ignore if keys is empty
+  }
 });
 
 afterAll(async () => {
@@ -40,4 +53,4 @@ afterAll(async () => {
   }
 });
 
-export { app, prisma };
+export { app, prisma, redis };

@@ -157,8 +157,10 @@ export class PaymentService {
         currency: "INR",
         customerId: booking.userId,
         customerName: booking.devoteeName || booking.user?.name || "Devotee",
-        customerPhone: booking.devoteePhone || booking.user?.phone || "9999999999",
-        customerEmail: booking.devoteeEmail || booking.user?.email || "devotee@temple.org",
+        customerPhone:
+          booking.devoteePhone || booking.user?.phone || "9999999999",
+        customerEmail:
+          booking.devoteeEmail || booking.user?.email || "devotee@temple.org",
         orderNote: `Booking payment: ${booking.reference}`,
       });
 
@@ -618,7 +620,10 @@ export class PaymentService {
         where: { id: payment.id },
         data: { status: "CANCELLED" },
       });
-      return ApiResponseDto.success({ status: "PROCESSED", state: "CANCELLED" });
+      return ApiResponseDto.success({
+        status: "PROCESSED",
+        state: "CANCELLED",
+      });
     }
 
     return ApiResponseDto.success({ status: "PROCESSED" });
@@ -680,7 +685,9 @@ export class PaymentService {
     });
     if (!payment) throw new NotFoundException("Payment not found");
     if (payment.status !== "SUCCESS") {
-      throw new BadRequestException("Payment is not in SUCCESS state for refund");
+      throw new BadRequestException(
+        "Payment is not in SUCCESS state for refund",
+      );
     }
 
     const refundAmount = amountPaise || payment.amountPaise;

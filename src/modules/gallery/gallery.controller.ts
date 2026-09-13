@@ -46,7 +46,8 @@ export class GalleryController {
     @Param("templeId") templeId: string,
     @Body()
     data: {
-      category: "gallery" | "paath" | "gurukul" | "events" | "deities" | "general";
+      category:
+        "gallery" | "paath" | "gurukul" | "events" | "deities" | "general";
       fileName: string;
       mimeType: string;
       sizeBytes?: number;

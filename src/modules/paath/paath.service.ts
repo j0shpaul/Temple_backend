@@ -101,7 +101,9 @@ export class PaathService {
     dto: CreatePaathDto,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions to create Paath");
     }
 
@@ -129,7 +131,9 @@ export class PaathService {
     dto: UpdatePaathDto,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions to update Paath");
     }
 
@@ -156,7 +160,9 @@ export class PaathService {
     if (!existing) throw new NotFoundException("Paath content not found");
 
     await this.prisma.paath.delete({ where: { id } });
-    return ApiResponseDto.success({ message: "Paath content deleted successfully" });
+    return ApiResponseDto.success({
+      message: "Paath content deleted successfully",
+    });
   }
 
   async setPublishStatus(
@@ -164,7 +170,9 @@ export class PaathService {
     isPublished: boolean,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 

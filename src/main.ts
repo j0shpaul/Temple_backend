@@ -34,12 +34,17 @@ async function bootstrap() {
       );
     }
     corsOrigin = originsStr.includes(",")
-      ? originsStr.split(",").map((s) => s.trim()).filter(Boolean)
+      ? originsStr
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : originsStr;
   } else {
     corsOrigin = process.env.CORS_ORIGINS
       ? process.env.CORS_ORIGINS.includes(",")
-        ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean)
+        ? process.env.CORS_ORIGINS.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
         : process.env.CORS_ORIGINS.trim()
       : [
           "http://localhost:3000",
@@ -121,10 +126,7 @@ async function bootstrap() {
         "Gurukul",
         "Shree Neelkantheshwar Mahadev Ved Vedang Gurukulam & Admissions",
       )
-      .addTag(
-        "Mahaprasad",
-        "Mahaprasad dining slot management & seat booking",
-      )
+      .addTag("Mahaprasad", "Mahaprasad dining slot management & seat booking")
       .addTag("Jigyasa Samadhan", "Spiritual inquiry & Sanatan Dharma Q&A")
       .addTag(
         "Admin",

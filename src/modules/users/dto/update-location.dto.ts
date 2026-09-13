@@ -8,7 +8,7 @@ export class UpdateLocationDto {
   @Max(90)
   latitude!: number;
 
-  @ApiProperty({ description: "Longitude (-180 to 180)", example: 77.2090 })
+  @ApiProperty({ description: "Longitude (-180 to 180)", example: 77.209 })
   @IsNumber()
   @Min(-180)
   @Max(180)

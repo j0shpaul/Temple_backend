@@ -511,7 +511,11 @@ export class AccommodationService {
           where: { id: b.id },
           include: { payment: true },
         });
-        if (!current || current.status !== "PENDING_PAYMENT" || (current as any).payment?.status === "SUCCESS") {
+        if (
+          !current ||
+          current.status !== "PENDING_PAYMENT" ||
+          (current as any).payment?.status === "SUCCESS"
+        ) {
           return;
         }
 

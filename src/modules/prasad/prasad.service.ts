@@ -280,7 +280,9 @@ export class PrasadService {
               AND ("stock" - "reservedStock") >= ${item.quantity}
           `;
           if (result === 0) {
-            throw new ConflictException(`Insufficient stock for ${product.name}`);
+            throw new ConflictException(
+              `Insufficient stock for ${product.name}`,
+            );
           }
         } else {
           await tx.prasadProduct.update({
@@ -501,7 +503,11 @@ export class PrasadService {
           where: { id: order.id },
           include: { payment: true },
         });
-        if (!current || current.status !== "PLACED" || (current as any).payment?.status === "SUCCESS") {
+        if (
+          !current ||
+          current.status !== "PLACED" ||
+          (current as any).payment?.status === "SUCCESS"
+        ) {
           return;
         }
 
@@ -513,7 +519,10 @@ export class PrasadService {
         // Release reserved inventory
         for (const item of order.items) {
           await tx.prasadProduct.updateMany({
-            where: { id: item.productId, reservedStock: { gte: item.quantity } },
+            where: {
+              id: item.productId,
+              reservedStock: { gte: item.quantity },
+            },
             data: { reservedStock: { decrement: item.quantity } },
           });
         }

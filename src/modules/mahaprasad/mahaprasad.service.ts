@@ -88,7 +88,8 @@ export class MahaprasadService {
         );
       }
 
-      const totalAmountPaise = (slot.pricePerPersonPaise || 0) * dto.numberOfPeople;
+      const totalAmountPaise =
+        (slot.pricePerPersonPaise || 0) * dto.numberOfPeople;
       const reference = IdUtil.generateBookingReference("MP");
       const qrToken = IdUtil.generateQRToken();
 
@@ -170,7 +171,15 @@ export class MahaprasadService {
     const booking = await this.prisma.mahaprasadBooking.findUnique({
       where: { reference },
       include: {
-        slot: { select: { sessionName: true, date: true, startTime: true, endTime: true, templeId: true } },
+        slot: {
+          select: {
+            sessionName: true,
+            date: true,
+            startTime: true,
+            endTime: true,
+            templeId: true,
+          },
+        },
         payment: true,
       },
     });
@@ -186,7 +195,9 @@ export class MahaprasadService {
     dto: CreateMahaprasadSlotDto,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 
@@ -220,7 +231,9 @@ export class MahaprasadService {
     dto: UpdateMahaprasadSlotDto,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 
@@ -287,7 +300,9 @@ export class MahaprasadService {
     id: string,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 
@@ -316,12 +331,13 @@ export class MahaprasadService {
     return ApiResponseDto.success(result);
   }
 
-
   async adminCheckIn(
     id: string,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 

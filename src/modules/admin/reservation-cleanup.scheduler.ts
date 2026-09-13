@@ -107,7 +107,9 @@ export class ReservationCleanupScheduler
         cleaned: result.data?.totalCleaned || 0,
       };
     } catch (error: any) {
-      this.logger.error(`Error during reservation cleanup cycle: ${error.message}`);
+      this.logger.error(
+        `Error during reservation cleanup cycle: ${error.message}`,
+      );
       return { executed: false };
     } finally {
       if (lockAcquired) {

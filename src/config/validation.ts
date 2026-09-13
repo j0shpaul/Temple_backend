@@ -30,9 +30,7 @@ export const validationSchema = Joi.object({
   DEV_OTP: Joi.string().default("123456"),
 
   // SMS Configuration (MSG91 for production in India)
-  SMS_PROVIDER: Joi.string()
-    .valid("msg91", "mock", "none")
-    .default("none"),
+  SMS_PROVIDER: Joi.string().valid("msg91", "mock", "none").default("none"),
   MSG91_AUTH_KEY: Joi.string().allow("").optional(),
   MSG91_SENDER_ID: Joi.string().allow("").optional(),
   MSG91_DLT_TE_ID: Joi.string().allow("").optional(),
@@ -44,6 +42,11 @@ export const validationSchema = Joi.object({
   CASHFREE_ENVIRONMENT: Joi.string()
     .valid("sandbox", "production")
     .default("sandbox"),
+
+  // Supabase Cloud Configuration
+  SUPABASE_URL: Joi.string().uri().allow("").optional(),
+  SUPABASE_ANON_KEY: Joi.string().allow("").optional(),
+  SUPABASE_BUCKET: Joi.string().allow("").optional(),
 
   // Object Storage Configuration
   STORAGE_PROVIDER: Joi.string()
@@ -96,7 +99,10 @@ export const validationSchema = Joi.object({
       }
 
       // 3. Cashfree Payment Gateway Production Checks
-      if (!value.CASHFREE_APP_ID || value.CASHFREE_APP_ID.includes("TEST_dummy")) {
+      if (
+        !value.CASHFREE_APP_ID ||
+        value.CASHFREE_APP_ID.includes("TEST_dummy")
+      ) {
         return helpers.message({
           custom: "Production requires valid CASHFREE_APP_ID",
         });
@@ -119,14 +125,17 @@ export const validationSchema = Joi.object({
       }
       if (value.CASHFREE_ENVIRONMENT !== "production") {
         return helpers.message({
-          custom:
-            "Production mode requires CASHFREE_ENVIRONMENT=production",
+          custom: "Production mode requires CASHFREE_ENVIRONMENT=production",
         });
       }
 
       // 4. SMS Provider Checks if MSG91 is enabled
       if (value.SMS_PROVIDER === "msg91") {
-        if (!value.MSG91_AUTH_KEY || !value.MSG91_SENDER_ID || !value.MSG91_DLT_TE_ID) {
+        if (
+          !value.MSG91_AUTH_KEY ||
+          !value.MSG91_SENDER_ID ||
+          !value.MSG91_DLT_TE_ID
+        ) {
           return helpers.message({
             custom:
               "MSG91 SMS provider requires MSG91_AUTH_KEY, MSG91_SENDER_ID, and MSG91_DLT_TE_ID",
@@ -154,4 +163,3 @@ export const validationSchema = Joi.object({
     }
     return value;
   });
-

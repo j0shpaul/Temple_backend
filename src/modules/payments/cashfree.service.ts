@@ -150,11 +150,16 @@ export class CashfreeService implements PaymentGateway {
         amount: input.amount,
         currency: data.order_currency || input.currency || "INR",
         status: data.order_status || "ACTIVE",
-        createdAt: data.created_at ? new Date(data.created_at).getTime() : Date.now(),
+        createdAt: data.created_at
+          ? new Date(data.created_at).getTime()
+          : Date.now(),
         raw: data,
       };
     } catch (error: any) {
-      if (error instanceof BadRequestException || error instanceof InternalServerErrorException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof InternalServerErrorException
+      ) {
         throw error;
       }
       if (process.env.NODE_ENV !== "production") {
@@ -223,11 +228,15 @@ export class CashfreeService implements PaymentGateway {
             raw: { mock: true },
           };
         }
-        throw new BadRequestException(`Order not found on Cashfree: ${orderId}`);
+        throw new BadRequestException(
+          `Order not found on Cashfree: ${orderId}`,
+        );
       }
 
       const orderData = (await orderRes.json()) as any;
-      const paymentsData = paymentsRes.ok ? ((await paymentsRes.json()) as any[]) : [];
+      const paymentsData = paymentsRes.ok
+        ? ((await paymentsRes.json()) as any[])
+        : [];
 
       const payments: PaymentDetails[] = Array.isArray(paymentsData)
         ? paymentsData.map((p) => ({
@@ -236,7 +245,8 @@ export class CashfreeService implements PaymentGateway {
             amount: Math.round(Number(p.payment_amount || 0) * 100), // convert to paise
             currency: p.payment_currency || "INR",
             status: p.payment_status || "PENDING",
-            paymentMethod: p.payment_group || p.payment_method?.type || undefined,
+            paymentMethod:
+              p.payment_group || p.payment_method?.type || undefined,
             paymentMessage: p.payment_message || undefined,
             paymentTime: p.payment_time || undefined,
             raw: p,
@@ -267,7 +277,9 @@ export class CashfreeService implements PaymentGateway {
     // Dev test signature bypass is strictly forbidden in production
     if (signature === "test_cashfree_signature") {
       if (process.env.NODE_ENV === "production") {
-        this.logger.error("ATTEMPTED TEST SIGNATURE BYPASS BLOCKED IN PRODUCTION");
+        this.logger.error(
+          "ATTEMPTED TEST SIGNATURE BYPASS BLOCKED IN PRODUCTION",
+        );
         return false;
       }
       return true;
@@ -317,9 +329,10 @@ export class CashfreeService implements PaymentGateway {
     if (typeof a !== "string" || typeof b !== "string") return false;
     if (a.length !== b.length) return false;
     try {
-      return createHmac("sha256", "key").update(a).digest().equals(
-        createHmac("sha256", "key").update(b).digest(),
-      );
+      return createHmac("sha256", "key")
+        .update(a)
+        .digest()
+        .equals(createHmac("sha256", "key").update(b).digest());
     } catch {
       return false;
     }
@@ -350,15 +363,18 @@ export class CashfreeService implements PaymentGateway {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/orders/${orderId}/refunds`, {
-        method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          refund_id: refundId,
-          refund_amount: amountInRupees,
-          refund_note: note || `Refund for order ${orderId}`,
-        }),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/orders/${orderId}/refunds`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            refund_id: refundId,
+            refund_amount: amountInRupees,
+            refund_note: note || `Refund for order ${orderId}`,
+          }),
+        },
+      );
 
       const data = (await response.json()) as any;
       if (!response.ok) {
@@ -372,7 +388,9 @@ export class CashfreeService implements PaymentGateway {
         orderId: data.order_id || orderId,
         amount: amountPaise,
         status: data.refund_status || "SUCCESS",
-        createdAt: data.created_at ? new Date(data.created_at).getTime() : Date.now(),
+        createdAt: data.created_at
+          ? new Date(data.created_at).getTime()
+          : Date.now(),
         raw: data,
       };
     } catch (error: any) {

@@ -50,7 +50,9 @@ export class CreatePaathDto {
   @IsOptional()
   durationSeconds?: number;
 
-  @ApiPropertyOptional({ description: "Category e.g. Vedic Mantra, Stotram, Aarti" })
+  @ApiPropertyOptional({
+    description: "Category e.g. Vedic Mantra, Stotram, Aarti",
+  })
   @IsString()
   @IsOptional()
   category?: string;

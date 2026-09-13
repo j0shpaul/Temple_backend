@@ -89,9 +89,7 @@ describe("RateLimitGuard", () => {
     mockRedis.incr.mockResolvedValue(6);
     mockRedis.ttl.mockResolvedValue(45);
 
-    await expect(guard.canActivate(mockContext)).rejects.toThrow(
-      HttpException,
-    );
+    await expect(guard.canActivate(mockContext)).rejects.toThrow(HttpException);
     expect(mockSetHeader).toHaveBeenCalledWith("Retry-After", "45");
   });
 

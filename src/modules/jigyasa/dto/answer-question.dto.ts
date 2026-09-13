@@ -7,12 +7,17 @@ export class AnswerQuestionDto {
   @IsNotEmpty()
   answer: string;
 
-  @ApiPropertyOptional({ description: "Name/title of authority providing the answer" })
+  @ApiPropertyOptional({
+    description: "Name/title of authority providing the answer",
+  })
   @IsString()
   @IsOptional()
   answeredBy?: string;
 
-  @ApiPropertyOptional({ default: true, description: "Whether to publish to public spiritual Q&A" })
+  @ApiPropertyOptional({
+    default: true,
+    description: "Whether to publish to public spiritual Q&A",
+  })
   @IsBoolean()
   @IsOptional()
   isPublic?: boolean;

@@ -16,4 +16,11 @@ export default registerAs("app", () => ({
     process.env.NODE_ENV === "production"
       ? null
       : process.env.DEV_OTP || "123456",
+  supabase: {
+    url: process.env.SUPABASE_URL || "https://slssagurwlrixwzxpkpj.supabase.co",
+    anonKey:
+      process.env.SUPABASE_ANON_KEY ||
+      "sb_publishable_dFbTM7aajNRgvR2ZYS5qTw__Tzf1qYn",
+    bucket: process.env.SUPABASE_BUCKET || "temple-media",
+  },
 }));

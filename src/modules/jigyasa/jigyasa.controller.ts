@@ -55,10 +55,7 @@ export class JigyasaController {
 
   @Post()
   @ApiOperation({ summary: "Submit spiritual inquiry / question (public)" })
-  async submitQuestion(
-    @Body() dto: AskQuestionDto,
-    @CurrentUser() user: any,
-  ) {
+  async submitQuestion(@Body() dto: AskQuestionDto, @CurrentUser() user: any) {
     return this.jigyasaService.submitQuestion(dto, user?.id);
   }
 }
@@ -72,7 +69,9 @@ export class AdminJigyasaController {
   constructor(private jigyasaService: JigyasaService) {}
 
   @Get()
-  @ApiOperation({ summary: "List all questions including pending & drafts (admin)" })
+  @ApiOperation({
+    summary: "List all questions including pending & drafts (admin)",
+  })
   @ApiQuery({ name: "status", required: false, type: String })
   @ApiQuery({ name: "category", required: false, type: String })
   @ApiQuery({ name: "isPublic", required: false, type: Boolean })
@@ -135,10 +134,7 @@ export class AdminJigyasaController {
 
   @Put(":id/reject")
   @ApiOperation({ summary: "Reject inappropriate question (admin)" })
-  async adminRejectQuestion(
-    @Param("id") id: string,
-    @CurrentUser() user: any,
-  ) {
+  async adminRejectQuestion(@Param("id") id: string, @CurrentUser() user: any) {
     return this.jigyasaService.adminRejectQuestion(id, user?.role);
   }
 
@@ -146,10 +142,7 @@ export class AdminJigyasaController {
   @HttpCode(HttpStatus.OK)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiOperation({ summary: "Delete question (admin)" })
-  async adminDeleteQuestion(
-    @Param("id") id: string,
-    @CurrentUser() user: any,
-  ) {
+  async adminDeleteQuestion(@Param("id") id: string, @CurrentUser() user: any) {
     return this.jigyasaService.adminDeleteQuestion(id, user?.role);
   }
 }

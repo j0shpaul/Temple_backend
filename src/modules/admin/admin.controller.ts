@@ -274,7 +274,9 @@ export class AdminController {
   async cleanupExpiredReservations(
     @Query("olderThanMinutes") olderThanMinutes?: number,
   ) {
-    return this.adminService.cleanupExpiredReservations(olderThanMinutes ? Number(olderThanMinutes) : 30);
+    return this.adminService.cleanupExpiredReservations(
+      olderThanMinutes ? Number(olderThanMinutes) : 30,
+    );
   }
 
   // ============== STAFF ASSIGNMENTS (MULTI-TEMPLE ISOLATION) ==============

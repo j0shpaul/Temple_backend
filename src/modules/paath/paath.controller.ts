@@ -125,6 +125,10 @@ export class AdminPaathController {
     @Body("isPublished") isPublished: boolean,
     @CurrentUser() user: any,
   ) {
-    return this.paathService.setPublishStatus(id, Boolean(isPublished), user?.role);
+    return this.paathService.setPublishStatus(
+      id,
+      Boolean(isPublished),
+      user?.role,
+    );
   }
 }

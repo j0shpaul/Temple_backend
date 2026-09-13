@@ -17,8 +17,9 @@ describe('Temple Digital Platform E2E Tests', () => {
   let testPrasadId: string;
   let testQrToken: string;
 
-  const testDevoteePhone = '+919999988881';
-  const testAdminPhone = '+919999988882';
+  const runId = Date.now().toString().slice(-6);
+  const testDevoteePhone = `+9199${runId}01`;
+  const testAdminPhone = `+9199${runId}02`;
 
   beforeAll(async () => {
     // 1. Create or ensure test temple
@@ -159,6 +160,7 @@ describe('Temple Digital Platform E2E Tests', () => {
         await prisma.user.deleteMany({ where: { id: devoteeId } });
       }
       if (adminId) {
+        await prisma.staffAssignment.deleteMany({ where: { userId: adminId } });
         await prisma.notification.deleteMany({ where: { userId: adminId } });
         await prisma.refreshToken.deleteMany({ where: { userId: adminId } });
         await prisma.user.deleteMany({ where: { id: adminId } });
@@ -218,22 +220,26 @@ describe('Temple Digital Platform E2E Tests', () => {
         .send({ phone: testAdminPhone, otp: '123456' });
       expect(res.status).toBe(200);
       adminId = res.body.data.user.id;
+      const initialRefreshToken = res.body.data.tokens.refreshToken;
 
-      // Escalate to ADMIN role in db
+      // Escalate to ADMIN role in db and assign to testTempleId
       await prisma.user.update({
         where: { id: adminId },
         data: { role: 'ADMIN', name: 'E2E Admin' },
       });
+      await prisma.staffAssignment.create({
+        data: {
+          userId: adminId,
+          templeId: testTempleId,
+        },
+      });
 
-      // Send OTP again for second login to get new JWT with ADMIN role
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/send-otp')
-        .send({ phone: testAdminPhone });
-
-      const adminRes = await request(app.getHttpServer())
-        .post('/api/v1/auth/verify-otp')
-        .send({ phone: testAdminPhone, otp: '123456' });
-      adminToken = adminRes.body.data.tokens.accessToken;
+      // Refresh tokens to get updated JWT with ADMIN role
+      const refreshRes = await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: initialRefreshToken });
+      expect(refreshRes.status).toBe(200);
+      adminToken = refreshRes.body.data.accessToken || refreshRes.body.data.tokens?.accessToken;
     });
 
     it('GET /api/v1/auth/profile returns logged-in user profile', async () => {
@@ -356,14 +362,14 @@ describe('Temple Digital Platform E2E Tests', () => {
       expect(res.body.data.id).toBe(testBookingId);
     });
 
-    it('POST /api/v1/payments/booking/:bookingId initiates Razorpay order for booking', async () => {
+    it('POST /api/v1/payments/booking/:bookingId initiates Cashfree order for booking', async () => {
       const res = await request(app.getHttpServer())
         .post(`/api/v1/payments/booking/${testBookingId}`)
         .set('Authorization', `Bearer ${devoteeToken}`);
 
       expect([200, 201]).toContain(res.status);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.razorpayOrderId).toBeDefined();
+      expect(res.body.data.orderId || res.body.data.paymentSessionId).toBeDefined();
     });
 
     it('POST /api/v1/bookings/:id/cancel cancels the booking and restores slot capacity', async () => {
@@ -405,7 +411,7 @@ describe('Temple Digital Platform E2E Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.razorpayOrderId).toBeDefined();
+      expect(res.body.data.orderId || res.body.data.paymentSessionId).toBeDefined();
     });
   });
 

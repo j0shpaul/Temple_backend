@@ -382,7 +382,10 @@ export class PagesController {
   })
   @ApiQuery({ name: "templeId", required: false, type: String })
   @ApiQuery({ name: "date", required: false, type: String })
-  @ApiResponse({ status: 200, description: "Mahaprasad page aggregated dataset" })
+  @ApiResponse({
+    status: 200,
+    description: "Mahaprasad page aggregated dataset",
+  })
   async getMahaPrasadPage(
     @Query("templeId") templeId?: string,
     @Query("date") date?: string,
@@ -390,4 +393,3 @@ export class PagesController {
     return this.pagesService.getMahaPrasadPage(templeId, date);
   }
 }
-

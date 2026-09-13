@@ -63,7 +63,9 @@ export class GurukulService {
 
   async createAdmission(
     dto: CreateAdmissionDto,
-  ): Promise<ApiResponseDto<{ id: string; message: string; studentName: string }>> {
+  ): Promise<
+    ApiResponseDto<{ id: string; message: string; studentName: string }>
+  > {
     // Resolve gurukulId if not supplied
     let gurukulId = dto.gurukulId;
     if (!gurukulId) {
@@ -92,7 +94,8 @@ export class GurukulService {
       id: admission.id,
       studentName: admission.studentName,
       status: admission.status,
-      message: "Admission inquiry submitted successfully. Temple authority will review and contact you.",
+      message:
+        "Admission inquiry submitted successfully. Temple authority will review and contact you.",
     });
   }
 
@@ -197,7 +200,9 @@ export class GurukulService {
     dto: UpdateAdmissionDto,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 
@@ -218,7 +223,9 @@ export class GurukulService {
     dto: CreateScheduleDto,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 
@@ -242,7 +249,9 @@ export class GurukulService {
     dto: UpdateScheduleDto,
     actorRole?: string,
   ): Promise<ApiResponseDto<any>> {
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")) {
+    if (
+      !["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole || "")
+    ) {
       throw new ForbiddenException("Insufficient permissions");
     }
 

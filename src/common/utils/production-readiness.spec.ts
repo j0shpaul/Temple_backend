@@ -27,7 +27,9 @@ describe("Production Readiness & Security Hardening Test Suite", () => {
 
       const { error } = validationSchema.validate(invalidConfig);
       expect(error).toBeDefined();
-      expect(error?.message).toContain("Production JWT_SECRET cannot use default or weak");
+      expect(error?.message).toContain(
+        "Production JWT_SECRET cannot use default or weak",
+      );
     });
 
     it("should reject startup in production mode if CORS_ORIGINS is set to wildcard '*'", () => {
@@ -36,7 +38,8 @@ describe("Production Readiness & Security Hardening Test Suite", () => {
         DATABASE_URL: "postgresql://user:pass@host:5432/db",
         REDIS_URL: "redis://localhost:6379",
         JWT_SECRET: "random_jwt_secret_key_at_least_32_chars_long_prod",
-        JWT_REFRESH_SECRET: "random_jwt_refresh_secret_key_at_least_32_chars_long_prod",
+        JWT_REFRESH_SECRET:
+          "random_jwt_refresh_secret_key_at_least_32_chars_long_prod",
         CORS_ORIGINS: "*",
         CASHFREE_APP_ID: "PROD_APP_123",
         CASHFREE_SECRET_KEY: "PROD_SECRET_123",
@@ -55,7 +58,8 @@ describe("Production Readiness & Security Hardening Test Suite", () => {
         DATABASE_URL: "postgresql://user:pass@host:5432/db",
         REDIS_URL: "redis://localhost:6379",
         JWT_SECRET: "random_jwt_secret_key_at_least_32_chars_long_prod",
-        JWT_REFRESH_SECRET: "random_jwt_refresh_secret_key_at_least_32_chars_long_prod",
+        JWT_REFRESH_SECRET:
+          "random_jwt_refresh_secret_key_at_least_32_chars_long_prod",
         CORS_ORIGINS: "https://temple.example.com",
         CASHFREE_APP_ID: "PROD_APP_123",
         CASHFREE_SECRET_KEY: "PROD_SECRET_123",
@@ -74,8 +78,10 @@ describe("Production Readiness & Security Hardening Test Suite", () => {
         DATABASE_URL: "postgresql://user:pass@host:5432/db",
         REDIS_URL: "rediss://default:pass@host.upstash.io:6379",
         JWT_SECRET: "random_jwt_secret_key_at_least_32_chars_long_prod_99",
-        JWT_REFRESH_SECRET: "random_jwt_refresh_secret_key_at_least_32_chars_long_prod_88",
-        CORS_ORIGINS: "https://temple.example.com,https://admin.temple.example.com",
+        JWT_REFRESH_SECRET:
+          "random_jwt_refresh_secret_key_at_least_32_chars_long_prod_88",
+        CORS_ORIGINS:
+          "https://temple.example.com,https://admin.temple.example.com",
         CASHFREE_APP_ID: "LIVE_APP_999",
         CASHFREE_SECRET_KEY: "LIVE_SECRET_999",
         CASHFREE_WEBHOOK_SECRET: "LIVE_WEBHOOK_SECRET_999",
@@ -114,8 +120,17 @@ describe("Production Readiness & Security Hardening Test Suite", () => {
     });
 
     it("should return null for missing coordinates gracefully", () => {
-      expect(LocationUtil.calculateDistanceKm(undefined, 77.209, 19.0169, 72.8304)).toBeNull();
-      expect(LocationUtil.calculateDistanceKm(28.6139, null as any, 19.0169, 72.8304)).toBeNull();
+      expect(
+        LocationUtil.calculateDistanceKm(undefined, 77.209, 19.0169, 72.8304),
+      ).toBeNull();
+      expect(
+        LocationUtil.calculateDistanceKm(
+          28.6139,
+          null as any,
+          19.0169,
+          72.8304,
+        ),
+      ).toBeNull();
     });
   });
 });

@@ -1,5 +1,5 @@
 import * as request from 'supertest';
-import { app, prisma } from './setup-e2e';
+import { app, prisma, redis } from './setup-e2e';
 import { SlotStatus } from '@prisma/client';
 
 describe('Concurrency & Race-Condition Tests', () => {
@@ -59,8 +59,9 @@ describe('Concurrency & Race-Condition Tests', () => {
     limitedSlotId = slot.id;
 
     // 3. Register 5 concurrent devotees
+    const runPrefix = Date.now().toString().slice(-5);
     for (let i = 1; i <= 5; i++) {
-      const phone = `+91999900000${i}`;
+      const phone = `+9197${runPrefix}00${i}`;
       await request(app.getHttpServer()).post('/api/v1/auth/send-otp').send({ phone });
       const verifyRes = await request(app.getHttpServer())
         .post('/api/v1/auth/verify-otp')
@@ -127,11 +128,17 @@ describe('Concurrency & Race-Condition Tests', () => {
   });
 
   it('handles simultaneous OTP generation without race condition', async () => {
-    const concurrentPhone = '+919999000099';
-    const otpPromises = [1, 2, 3, 4].map(() =>
+    // Clear IP rate limit for the simultaneous test to run cleanly
+    try {
+      const keys = await redis.keys('ratelimit:*');
+      if (keys.length > 0) await redis.del(...keys);
+    } catch (e) {}
+
+    const simPrefix = (Date.now() + 100).toString().slice(-5);
+    const otpPromises = [1, 2, 3, 4].map((i) =>
       request(app.getHttpServer())
         .post('/api/v1/auth/send-otp')
-        .send({ phone: concurrentPhone })
+        .send({ phone: `+9196${simPrefix}00${i}` })
     );
 
     const results = await Promise.all(otpPromises);

@@ -19,7 +19,7 @@ describe("Seed Safety Verification", () => {
     };
 
     await expect(resetAndSeedDevelopmentData(mockPrisma)).rejects.toThrow(
-      /FATAL: Destructive database reset and demo data seeding cannot be executed in production environment/
+      /FATAL: Destructive database reset and demo data seeding cannot be executed in production environment/,
     );
 
     expect(mockPrisma.user.deleteMany).not.toHaveBeenCalled();
@@ -35,7 +35,10 @@ describe("Seed Safety Verification", () => {
         deleteMany: jest.fn(),
       },
       temple: {
-        findFirst: jest.fn().mockResolvedValue({ id: "temple-1", name: "Sri Venkateswara Temple" }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: "temple-1",
+          name: "Sri Venkateswara Temple",
+        }),
         deleteMany: jest.fn(),
       },
       templeInformation: {
@@ -69,7 +72,10 @@ describe("Seed Safety Verification", () => {
 
     const result = await seedProductionMasterData(mockPrisma);
 
-    expect(result).toEqual({ templeId: "temple-1", superAdminId: "super-admin-id" });
+    expect(result).toEqual({
+      templeId: "temple-1",
+      superAdminId: "super-admin-id",
+    });
     expect(mockPrisma.user.upsert).toHaveBeenCalled();
     expect(mockPrisma.donationCause.upsert).toHaveBeenCalled();
 

@@ -520,7 +520,11 @@ export class BookingService {
           where: { id: booking.id },
           include: { payment: true },
         });
-        if (!current || current.status !== "PENDING_PAYMENT" || (current as any).payment?.status === "SUCCESS") {
+        if (
+          !current ||
+          current.status !== "PENDING_PAYMENT" ||
+          (current as any).payment?.status === "SUCCESS"
+        ) {
           return;
         }
 
@@ -537,12 +541,18 @@ export class BookingService {
         if (booking.slotId) {
           if (booking.bookingType === "PUJA") {
             await tx.pujaSlot.updateMany({
-              where: { id: booking.slotId, bookedCount: { gte: booking.quantity } },
+              where: {
+                id: booking.slotId,
+                bookedCount: { gte: booking.quantity },
+              },
               data: { bookedCount: { decrement: booking.quantity } },
             });
           } else if (booking.bookingType === "SEVA") {
             await tx.sevaSlot.updateMany({
-              where: { id: booking.slotId, bookedCount: { gte: booking.quantity } },
+              where: {
+                id: booking.slotId,
+                bookedCount: { gte: booking.quantity },
+              },
               data: { bookedCount: { decrement: booking.quantity } },
             });
           }

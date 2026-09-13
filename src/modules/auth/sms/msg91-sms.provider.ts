@@ -1,4 +1,8 @@
-import { Injectable, Logger, InternalServerErrorException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SmsProvider } from "./sms-provider.interface";
 
@@ -28,7 +32,9 @@ export class Msg91SmsProvider implements SmsProvider {
           "MSG91 SMS credentials are not properly configured in production",
         );
       }
-      this.logger.warn("MSG91 credentials missing; skipping physical SMS in non-production mode");
+      this.logger.warn(
+        "MSG91 credentials missing; skipping physical SMS in non-production mode",
+      );
       return true;
     }
 
@@ -70,7 +76,9 @@ export class Msg91SmsProvider implements SmsProvider {
         return false;
       }
 
-      this.logger.log(`MSG91 OTP successfully dispatched to recipient phone [${phone.substring(0, 5)}***]`);
+      this.logger.log(
+        `MSG91 OTP successfully dispatched to recipient phone [${phone.substring(0, 5)}***]`,
+      );
       return true;
     } catch (error: any) {
       this.logger.error(`MSG91 API request network error: ${error.message}`);

@@ -233,7 +233,10 @@ describe("AuthService", () => {
       expect(result.success).toBe(true);
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: "user-1" },
-        data: expect.objectContaining({ name: "New Name", email: "new@example.com" }),
+        data: expect.objectContaining({
+          name: "New Name",
+          email: "new@example.com",
+        }),
         select: expect.any(Object),
       });
     });

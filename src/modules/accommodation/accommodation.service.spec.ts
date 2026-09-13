@@ -510,10 +510,14 @@ describe("AccommodationService", () => {
         return cb({
           accommodationBooking: {
             findUnique: jest.fn().mockResolvedValue(expired[0]),
-            update: jest.fn().mockResolvedValue({ id: "acc-exp-1", status: "CANCELLED" }),
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: "acc-exp-1", status: "CANCELLED" }),
           },
           payment: {
-            update: jest.fn().mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
           },
         });
       });

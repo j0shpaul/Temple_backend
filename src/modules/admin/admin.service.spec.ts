@@ -60,8 +60,15 @@ describe("AdminService", () => {
 
   describe("assignStaff", () => {
     it("should successfully assign a staff/manager/admin user to a temple", async () => {
-      prisma.temple.findUnique.mockResolvedValue({ id: "temple-1", name: "Main Temple" });
-      prisma.user.findUnique.mockResolvedValue({ id: "user-1", name: "Staff Member", role: Role.STAFF });
+      prisma.temple.findUnique.mockResolvedValue({
+        id: "temple-1",
+        name: "Main Temple",
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        name: "Staff Member",
+        role: Role.STAFF,
+      });
       prisma.staffAssignment.upsert.mockResolvedValue({
         id: "assign-1",
         userId: "user-1",
@@ -91,22 +98,36 @@ describe("AdminService", () => {
 
     it("should reject assigning DEVOTEE role directly without role upgrade", async () => {
       prisma.temple.findUnique.mockResolvedValue({ id: "temple-1" });
-      prisma.user.findUnique.mockResolvedValue({ id: "user-devotee", role: Role.DEVOTEE });
+      prisma.user.findUnique.mockResolvedValue({
+        id: "user-devotee",
+        role: Role.DEVOTEE,
+      });
 
-      await expect(service.assignStaff("temple-1", "user-devotee")).rejects.toThrow(BadRequestException);
+      await expect(
+        service.assignStaff("temple-1", "user-devotee"),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it("should throw NotFoundException if temple does not exist", async () => {
       prisma.temple.findUnique.mockResolvedValue(null);
-      prisma.user.findUnique.mockResolvedValue({ id: "user-1", role: Role.STAFF });
+      prisma.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        role: Role.STAFF,
+      });
 
-      await expect(service.assignStaff("temple-invalid", "user-1")).rejects.toThrow(NotFoundException);
+      await expect(
+        service.assignStaff("temple-invalid", "user-1"),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe("removeStaff", () => {
     it("should remove staff assignment successfully", async () => {
-      prisma.staffAssignment.findUnique.mockResolvedValue({ id: "assign-1", userId: "user-1", templeId: "temple-1" });
+      prisma.staffAssignment.findUnique.mockResolvedValue({
+        id: "assign-1",
+        userId: "user-1",
+        templeId: "temple-1",
+      });
       prisma.staffAssignment.delete.mockResolvedValue({ id: "assign-1" });
 
       const res = await service.removeStaff("temple-1", "user-1");
@@ -117,7 +138,9 @@ describe("AdminService", () => {
     it("should throw NotFoundException when assignment does not exist", async () => {
       prisma.staffAssignment.findUnique.mockResolvedValue(null);
 
-      await expect(service.removeStaff("temple-1", "user-unknown")).rejects.toThrow(NotFoundException);
+      await expect(
+        service.removeStaff("temple-1", "user-unknown"),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -127,7 +150,9 @@ describe("AdminService", () => {
       expect(res.success).toBe(true);
       expect(res.data.totalCleaned).toBe(6);
       expect(bookingService.expirePendingBookings).toHaveBeenCalledWith(30);
-      expect(accommodationService.expirePendingBookings).toHaveBeenCalledWith(30);
+      expect(accommodationService.expirePendingBookings).toHaveBeenCalledWith(
+        30,
+      );
       expect(prasadService.expirePendingOrders).toHaveBeenCalledWith(30);
     });
   });

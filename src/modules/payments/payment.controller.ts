@@ -51,10 +51,7 @@ export class PaymentController {
   @ApiOperation({
     summary: "Reconcile / check authoritative payment status from gateway",
   })
-  async getPaymentStatus(
-    @Param("id") id: string,
-    @CurrentUser() user: any,
-  ) {
+  async getPaymentStatus(@Param("id") id: string, @CurrentUser() user: any) {
     return this.paymentService.reconcilePayment(id, user.id, user.role);
   }
 

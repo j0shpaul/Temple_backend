@@ -407,13 +407,17 @@ describe("BookingService", () => {
         return cb({
           booking: {
             findUnique: jest.fn().mockResolvedValue(expired[0]),
-            update: jest.fn().mockResolvedValue({ id: "expired-1", status: "CANCELLED" }),
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: "expired-1", status: "CANCELLED" }),
           },
           pujaSlot: {
             updateMany: jest.fn().mockResolvedValue({ count: 1 }),
           },
           payment: {
-            update: jest.fn().mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
           },
         });
       });

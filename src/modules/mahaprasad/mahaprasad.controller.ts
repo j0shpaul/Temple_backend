@@ -33,7 +33,12 @@ export class MahaprasadController {
   @Get("slots")
   @ApiOperation({ summary: "List available Mahaprasad dining slots (public)" })
   @ApiQuery({ name: "templeId", required: false, type: String })
-  @ApiQuery({ name: "date", required: false, type: String, description: "YYYY-MM-DD" })
+  @ApiQuery({
+    name: "date",
+    required: false,
+    type: String,
+    description: "YYYY-MM-DD",
+  })
   async listSlots(
     @Query("templeId") templeId?: string,
     @Query("date") date?: string,
@@ -43,10 +48,7 @@ export class MahaprasadController {
 
   @Post("book")
   @ApiOperation({ summary: "Book Mahaprasad dining token/seats (public)" })
-  async bookSlot(
-    @Body() dto: BookMahaprasadDto,
-    @CurrentUser() user: any,
-  ) {
+  async bookSlot(@Body() dto: BookMahaprasadDto, @CurrentUser() user: any) {
     return this.mahaprasadService.bookSlot(dto, user?.id);
   }
 
@@ -108,20 +110,18 @@ export class AdminMahaprasadController {
   }
 
   @Put("bookings/:id/cancel")
-  @ApiOperation({ summary: "Cancel Mahaprasad booking & restore capacity (admin)" })
-  async adminCancelBooking(
-    @Param("id") id: string,
-    @CurrentUser() user: any,
-  ) {
+  @ApiOperation({
+    summary: "Cancel Mahaprasad booking & restore capacity (admin)",
+  })
+  async adminCancelBooking(@Param("id") id: string, @CurrentUser() user: any) {
     return this.mahaprasadService.adminCancelBooking(id, user?.role);
   }
 
   @Put("bookings/:id/checkin")
-  @ApiOperation({ summary: "Mark Mahaprasad devotee checked-in at dining hall (admin)" })
-  async adminCheckIn(
-    @Param("id") id: string,
-    @CurrentUser() user: any,
-  ) {
+  @ApiOperation({
+    summary: "Mark Mahaprasad devotee checked-in at dining hall (admin)",
+  })
+  async adminCheckIn(@Param("id") id: string, @CurrentUser() user: any) {
     return this.mahaprasadService.adminCheckIn(id, user?.role);
   }
 }

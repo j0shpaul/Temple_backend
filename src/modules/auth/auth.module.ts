@@ -37,4 +37,3 @@ import { RedisModule } from "../redis/redis.module";
   exports: [AuthService, JwtModule, SmsService],
 })
 export class AuthModule {}
-

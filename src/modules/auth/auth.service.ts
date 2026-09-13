@@ -277,7 +277,9 @@ export class AuthService {
       emergencyContact?: string;
     },
   ): Promise<ApiResponseDto<any>> {
-    const existing = await this.prisma.user.findUnique({ where: { id: userId } });
+    const existing = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
     if (!existing) {
       throw new UnauthorizedException("User not found");
     }
@@ -285,7 +287,10 @@ export class AuthService {
     const finalName = data.name ?? existing.name;
     const finalEmail = data.email ?? existing.email;
     const isProfileComplete = Boolean(
-      finalName && finalName.trim().length > 0 && finalEmail && finalEmail.trim().length > 0,
+      finalName &&
+      finalName.trim().length > 0 &&
+      finalEmail &&
+      finalEmail.trim().length > 0,
     );
 
     const updateData: any = {
@@ -330,11 +335,16 @@ export class AuthService {
     if (typeof data?.name === "string") safeData.name = data.name;
     if (typeof data?.email === "string") safeData.email = data.email;
 
-    const existing = await this.prisma.user.findUnique({ where: { id: userId } });
+    const existing = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
     const finalName = safeData.name ?? existing?.name;
     const finalEmail = safeData.email ?? existing?.email;
     const isProfileComplete = Boolean(
-      finalName && finalName.trim().length > 0 && finalEmail && finalEmail.trim().length > 0,
+      finalName &&
+      finalName.trim().length > 0 &&
+      finalEmail &&
+      finalEmail.trim().length > 0,
     );
 
     const user = await this.prisma.user.update({

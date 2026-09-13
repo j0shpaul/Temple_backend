@@ -26,10 +26,13 @@ export class TempleAccessGuard implements CanActivate {
 
     // Extract target templeId candidates from route params, query string, request body, or header
     const candidates: string[] = [];
-    if (request.params?.templeId) candidates.push(String(request.params.templeId));
-    if (request.query?.templeId) candidates.push(String(request.query.templeId));
+    if (request.params?.templeId)
+      candidates.push(String(request.params.templeId));
+    if (request.query?.templeId)
+      candidates.push(String(request.query.templeId));
     if (request.body?.templeId) candidates.push(String(request.body.templeId));
-    if (request.headers?.["x-temple-id"]) candidates.push(String(request.headers["x-temple-id"]));
+    if (request.headers?.["x-temple-id"])
+      candidates.push(String(request.headers["x-temple-id"]));
 
     const uniqueTempleIds = Array.from(new Set(candidates.filter(Boolean)));
 
@@ -51,7 +54,7 @@ export class TempleAccessGuard implements CanActivate {
 
       if (!assignment) {
         throw new ForbiddenException(
-          "Access denied: You are not assigned to manage this temple."
+          "Access denied: You are not assigned to manage this temple.",
         );
       }
     }

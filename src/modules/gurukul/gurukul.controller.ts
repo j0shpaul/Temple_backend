@@ -36,21 +36,27 @@ export class GurukulController {
   constructor(private gurukulService: GurukulService) {}
 
   @Get()
-  @ApiOperation({ summary: "Get Gurukul identity, overview and daily schedule (public)" })
+  @ApiOperation({
+    summary: "Get Gurukul identity, overview and daily schedule (public)",
+  })
   @ApiQuery({ name: "templeId", required: false, type: String })
   async getGurukul(@Query("templeId") templeId?: string) {
     return this.gurukulService.getGurukul(templeId);
   }
 
   @Get("dincharya")
-  @ApiOperation({ summary: "Get Gurukul Dincharya (daily routine schedule) (public)" })
+  @ApiOperation({
+    summary: "Get Gurukul Dincharya (daily routine schedule) (public)",
+  })
   @ApiQuery({ name: "gurukulId", required: false, type: String })
   async getDincharya(@Query("gurukulId") gurukulId?: string) {
     return this.gurukulService.getDincharya(gurukulId);
   }
 
   @Post("admissions")
-  @ApiOperation({ summary: "Submit Gurukul admission / Pravesh application (public)" })
+  @ApiOperation({
+    summary: "Submit Gurukul admission / Pravesh application (public)",
+  })
   async createAdmission(@Body() dto: CreateAdmissionDto) {
     return this.gurukulService.createAdmission(dto);
   }
@@ -65,7 +71,9 @@ export class AdminGurukulController {
   constructor(private gurukulService: GurukulService) {}
 
   @Get()
-  @ApiOperation({ summary: "Get Gurukul details with schedules & counts (admin)" })
+  @ApiOperation({
+    summary: "Get Gurukul details with schedules & counts (admin)",
+  })
   @ApiQuery({ name: "id", required: false, type: String })
   async adminGetGurukul(@Query("id") id?: string) {
     return this.gurukulService.adminGetGurukul(id);
@@ -112,7 +120,9 @@ export class AdminGurukulController {
   }
 
   @Put("admissions/:id")
-  @ApiOperation({ summary: "Review and update admission status & notes (admin)" })
+  @ApiOperation({
+    summary: "Review and update admission status & notes (admin)",
+  })
   async adminUpdateAdmission(
     @Param("id") id: string,
     @Body() dto: UpdateAdmissionDto,
@@ -144,10 +154,7 @@ export class AdminGurukulController {
   @HttpCode(HttpStatus.OK)
   @Roles("ADMIN", "SUPER_ADMIN", "MANAGER")
   @ApiOperation({ summary: "Delete Dincharya schedule entry (admin)" })
-  async adminDeleteSchedule(
-    @Param("id") id: string,
-    @CurrentUser() user: any,
-  ) {
+  async adminDeleteSchedule(@Param("id") id: string, @CurrentUser() user: any) {
     return this.gurukulService.adminDeleteSchedule(id, user?.role);
   }
 }

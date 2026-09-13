@@ -53,7 +53,10 @@ export class LocationUtil {
 
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(rLat1) * Math.cos(rLat2);
+      Math.sin(dLon / 2) *
+        Math.sin(dLon / 2) *
+        Math.cos(rLat1) *
+        Math.cos(rLat2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 

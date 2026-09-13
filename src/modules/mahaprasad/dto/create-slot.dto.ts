@@ -39,7 +39,10 @@ export class CreateMahaprasadSlotDto {
   @Min(1)
   capacity: number;
 
-  @ApiPropertyOptional({ default: 0, description: "Price in paise (0 = free / token)" })
+  @ApiPropertyOptional({
+    default: 0,
+    description: "Price in paise (0 = free / token)",
+  })
   @IsInt()
   @Min(0)
   @IsOptional()

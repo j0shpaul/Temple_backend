@@ -10,7 +10,8 @@ describe("MediaUploadService", () => {
   const mockConfigService = {
     get: jest.fn((key: string) => {
       if (key === "S3_BUCKET_NAME") return "temple-assets-prod";
-      if (key === "S3_ENDPOINT") return "https://temple-assets-prod.s3.amazonaws.com";
+      if (key === "S3_ENDPOINT")
+        return "https://temple-assets-prod.s3.amazonaws.com";
       return null;
     }),
   };
@@ -46,8 +47,12 @@ describe("MediaUploadService", () => {
 
     expect(result).toBeDefined();
     expect(result.provider).toBe("S3_COMPATIBLE");
-    expect(result.uploadUrl).toContain("https://temple-assets-prod.s3.amazonaws.com/temples/temple-1/gallery/");
-    expect(result.key).toMatch(/^temples\/temple-1\/gallery\/\d+_[a-f0-9]+\.jpg$/);
+    expect(result.uploadUrl).toContain(
+      "https://temple-assets-prod.s3.amazonaws.com/temples/temple-1/gallery/",
+    );
+    expect(result.key).toMatch(
+      /^temples\/temple-1\/gallery\/\d+_[a-f0-9]+\.jpg$/,
+    );
     expect(result.mimeType).toBe("image/jpeg");
     expect(result.maxSizeBytes).toBe(10 * 1024 * 1024);
   });

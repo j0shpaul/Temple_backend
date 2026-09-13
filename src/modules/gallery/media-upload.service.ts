@@ -66,8 +66,13 @@ export class MediaUploadService {
       );
     }
 
-    const { mimeType, fileName, category, templeId = "temple-main", sizeBytes } =
-      request;
+    const {
+      mimeType,
+      fileName,
+      category,
+      templeId = "temple-main",
+      sizeBytes,
+    } = request;
 
     // 2. Validate MIME type
     const mimeConfig = this.ALLOWED_MIME_TYPES[mimeType.toLowerCase()];

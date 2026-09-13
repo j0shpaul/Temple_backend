@@ -125,7 +125,9 @@ export class DonationService {
     });
     if (!cause) throw new NotFoundException("Donation cause not found");
 
-    const isStaffAdmin = actorRole && ["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole);
+    const isStaffAdmin =
+      actorRole &&
+      ["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"].includes(actorRole);
     const isDirectOffline = data.isDirect === true || isStaffAdmin;
 
     const reference = IdUtil.generateOrderReference().replace("ORD", "DON");

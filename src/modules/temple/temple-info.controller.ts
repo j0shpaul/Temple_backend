@@ -10,11 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-} from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 
 import { TempleInfoService } from "./temple-info.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";

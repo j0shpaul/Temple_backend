@@ -308,7 +308,14 @@ export class AdminService {
     page?: number;
     limit?: number;
   }): Promise<ApiResponseDto<any>> {
-    const { role, status, search, isProfileComplete, page = 1, limit = 50 } = params;
+    const {
+      role,
+      status,
+      search,
+      isProfileComplete,
+      page = 1,
+      limit = 50,
+    } = params;
     const pageNum = Math.max(1, Number(page) || 1);
     const limitNum = Math.max(1, Number(limit) || 50);
     const skip = (pageNum - 1) * limitNum;
@@ -316,7 +323,8 @@ export class AdminService {
     const where: any = {};
     if (role) where.role = role;
     if (status) where.status = status;
-    if (isProfileComplete !== undefined) where.isProfileComplete = isProfileComplete;
+    if (isProfileComplete !== undefined)
+      where.isProfileComplete = isProfileComplete;
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -575,7 +583,10 @@ export class AdminService {
 
   // ============== STAFF ASSIGNMENTS (MULTI-TEMPLE ISOLATION) ==============
 
-  async assignStaff(templeId: string, userId: string): Promise<ApiResponseDto<any>> {
+  async assignStaff(
+    templeId: string,
+    userId: string,
+  ): Promise<ApiResponseDto<any>> {
     const [temple, user] = await Promise.all([
       this.prisma.temple.findUnique({ where: { id: templeId } }),
       this.prisma.user.findUnique({ where: { id: userId } }),
@@ -585,7 +596,9 @@ export class AdminService {
     if (!user) throw new NotFoundException("User not found");
 
     if (user.role === Role.DEVOTEE) {
-      throw new BadRequestException("Cannot assign DEVOTEE to staff role without upgrading user role first.");
+      throw new BadRequestException(
+        "Cannot assign DEVOTEE to staff role without upgrading user role first.",
+      );
     }
 
     const assignment = await this.prisma.staffAssignment.upsert({
@@ -601,15 +614,28 @@ export class AdminService {
         templeId,
       },
       include: {
-        user: { select: { id: true, name: true, phone: true, email: true, role: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            role: true,
+          },
+        },
         temple: { select: { id: true, name: true } },
       },
     });
 
-    return ApiResponseDto.success(assignment, { message: "Staff assigned to temple successfully" });
+    return ApiResponseDto.success(assignment, {
+      message: "Staff assigned to temple successfully",
+    });
   }
 
-  async removeStaff(templeId: string, userId: string): Promise<ApiResponseDto<any>> {
+  async removeStaff(
+    templeId: string,
+    userId: string,
+  ): Promise<ApiResponseDto<any>> {
     const existing = await this.prisma.staffAssignment.findUnique({
       where: {
         userId_templeId: {
@@ -636,13 +662,24 @@ export class AdminService {
   }
 
   async getTempleStaff(templeId: string): Promise<ApiResponseDto<any>> {
-    const temple = await this.prisma.temple.findUnique({ where: { id: templeId } });
+    const temple = await this.prisma.temple.findUnique({
+      where: { id: templeId },
+    });
     if (!temple) throw new NotFoundException("Temple not found");
 
     const assignments = await this.prisma.staffAssignment.findMany({
       where: { templeId },
       include: {
-        user: { select: { id: true, name: true, phone: true, email: true, role: true, status: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            role: true,
+            status: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -654,7 +691,15 @@ export class AdminService {
     const assignments = await this.prisma.staffAssignment.findMany({
       where: { userId },
       include: {
-        temple: { select: { id: true, name: true, city: true, state: true, status: true } },
+        temple: {
+          select: {
+            id: true,
+            name: true,
+            city: true,
+            state: true,
+            status: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -664,12 +709,15 @@ export class AdminService {
 
   // ============== RESERVATION CLEANUP ==============
 
-  async cleanupExpiredReservations(olderThanMinutes = 30): Promise<ApiResponseDto<any>> {
-    const [expiredBookings, expiredAccommodations, expiredPrasad] = await Promise.all([
-      this.bookingService.expirePendingBookings(olderThanMinutes),
-      this.accommodationService.expirePendingBookings(olderThanMinutes),
-      this.prasadService.expirePendingOrders(olderThanMinutes),
-    ]);
+  async cleanupExpiredReservations(
+    olderThanMinutes = 30,
+  ): Promise<ApiResponseDto<any>> {
+    const [expiredBookings, expiredAccommodations, expiredPrasad] =
+      await Promise.all([
+        this.bookingService.expirePendingBookings(olderThanMinutes),
+        this.accommodationService.expirePendingBookings(olderThanMinutes),
+        this.prasadService.expirePendingOrders(olderThanMinutes),
+      ]);
 
     return ApiResponseDto.success({
       expiredBookings,
@@ -681,4 +729,3 @@ export class AdminService {
     });
   }
 }
-

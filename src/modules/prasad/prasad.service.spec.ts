@@ -340,13 +340,17 @@ describe("PrasadService", () => {
         return cb({
           prasadOrder: {
             findUnique: jest.fn().mockResolvedValue(expired[0]),
-            update: jest.fn().mockResolvedValue({ id: "order-exp-1", status: "CANCELLED" }),
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: "order-exp-1", status: "CANCELLED" }),
           },
           prasadProduct: {
             updateMany: jest.fn().mockResolvedValue({ count: 1 }),
           },
           payment: {
-            update: jest.fn().mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: "pay-1", status: "CANCELLED" }),
           },
         });
       });

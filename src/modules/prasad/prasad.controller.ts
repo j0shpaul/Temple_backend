@@ -83,7 +83,12 @@ export class PrasadController {
     @Body() data: { quantity: number; mode: "SET" | "INCREMENT" | "DECREMENT" },
     @CurrentUser() user: any,
   ) {
-    return this.prasadService.updateStock(id, data.quantity, data.mode, user.role);
+    return this.prasadService.updateStock(
+      id,
+      data.quantity,
+      data.mode,
+      user.role,
+    );
   }
 
   @Delete("products/:id")

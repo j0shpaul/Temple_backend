@@ -72,7 +72,9 @@ describe("ReservationCleanupScheduler", () => {
       180,
       "NX",
     );
-    expect(mockAdminService.cleanupExpiredReservations).toHaveBeenCalledWith(30);
+    expect(mockAdminService.cleanupExpiredReservations).toHaveBeenCalledWith(
+      30,
+    );
   });
 
   it("should skip cleanup cycle when lock is held by another instance", async () => {
